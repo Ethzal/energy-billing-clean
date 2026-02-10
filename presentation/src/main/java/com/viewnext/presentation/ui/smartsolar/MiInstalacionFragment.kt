@@ -1,31 +1,31 @@
-package com.viewnext.presentation.ui.smartsolar;
+package com.viewnext.presentation.ui.smartsolar
 
-import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import com.viewnext.presentation.databinding.FragmentMiInstalacionBinding;
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import com.viewnext.presentation.databinding.FragmentMiInstalacionBinding
 
 /**
  * Fragment que muestra la sección "Mi Instalación" de Smart Solar.
  * Utiliza ViewBinding para acceder a los elementos de layout de manera segura.
  */
-public class MiInstalacionFragment extends Fragment {
-    private FragmentMiInstalacionBinding binding;
+class MiInstalacionFragment : Fragment() {
+    private var _binding: FragmentMiInstalacionBinding? = null
+    private val binding get() = _binding!!
 
-    public MiInstalacionFragment() {
-        // Constructor vacío
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentMiInstalacionBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Binding
-        binding = FragmentMiInstalacionBinding.inflate(inflater, container, false);
-
-        return binding.getRoot();
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

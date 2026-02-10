@@ -1,5 +1,6 @@
 [versions]
 agp = "8.8.0"
+fragmentKtx = "1.8.9"
 hiltAndroid = "2.58"
 kotlin = "2.3.0"
 converterGson = "2.9.0"
@@ -9,6 +10,7 @@ junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
 lifecycleViewmodel = "2.8.7"
+lifecycleViewmodelKtxVersion = "2.8.6"
 material = "1.12.0"
 activity = "1.10.0"
 constraintlayout = "2.2.0"
@@ -28,6 +30,8 @@ appcompatVersion = "1.7.1"
 googleMaterialVersion = "1.13.0"
 
 [libraries]
+androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragmentKtx" }
+androidx-lifecycle-viewmodel-ktx-v286 = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtxVersion" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 converter-scalars = { module = "com.squareup.retrofit2:converter-scalars", version.ref = "converterGson" }
 core-testing = { module = "androidx.arch.core:core-testing", version.ref = "coreTesting" }

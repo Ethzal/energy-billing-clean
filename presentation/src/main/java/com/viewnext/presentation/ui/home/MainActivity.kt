@@ -1,22 +1,18 @@
-package com.viewnext.presentation.ui.home;
+package com.viewnext.presentation.ui.home
 
-import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.os.Bundle;
-import android.view.View;
-
-import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.lifecycle.ViewModelProvider;
-
-import com.viewnext.presentation.databinding.ActivityMainBinding;
-import com.viewnext.presentation.ui.factura.FacturaActivity;
-import com.viewnext.presentation.ui.smartsolar.SmartSolarActivity;
-
-import dagger.hilt.android.AndroidEntryPoint;
+import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.os.Bundle
+import android.view.View
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.ViewModelProvider
+import com.viewnext.presentation.databinding.ActivityMainBinding
+import com.viewnext.presentation.ui.factura.FacturaActivity
+import com.viewnext.presentation.ui.smartsolar.SmartSolarActivity
+import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * Activity principal de la aplicación.
@@ -26,59 +22,66 @@ import dagger.hilt.android.AndroidEntryPoint;
  * - Navegación a FacturaActivity y SmartSolarActivity.
  */
 @AndroidEntryPoint
-public class MainActivity extends AppCompatActivity {
-    MainViewModel viewModel;
-    private ActivityMainBinding binding;
+class MainActivity : AppCompatActivity() {
+    var viewModel: MainViewModel? = null
+    private var binding: ActivityMainBinding? = null
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-        EdgeToEdge.enable(this); // La interfaz se extiende por toda la pantalla
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        this.enableEdgeToEdge() // La interfaz se extiende por toda la pantalla
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding?.getRoot())
 
-        viewModel = new ViewModelProvider(this).get(MainViewModel.class);
+        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
-        setupWindowInsets();
-        setupToggleVisibility();
-        setupClickListeners();
+        setupWindowInsets()
+        setupToggleVisibility()
+        setupClickListeners()
     }
 
-    private void setupWindowInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
-    }
-
-    private void setupToggleVisibility() {
-        boolean isDebug = (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
-        if (isDebug) {
-            binding.btToggleApi.setVisibility(View.VISIBLE);
-        } else {
-            binding.btToggleApi.setVisibility(View.GONE);
+    private fun setupWindowInsets() {
+        binding?.root?.let { rootView ->
+            ViewCompat.setOnApplyWindowInsetsListener(rootView) { v, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                systemBars.let { bars ->
+                    v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+                }
+                insets
+            }
         }
     }
 
-    private void setupClickListeners() {
-        binding.btToggleApi.setOnClickListener(v -> viewModel.toggleApi());
-
-        binding.btFacturas.setOnClickListener(v -> {
-            Intent intent = new Intent(this, FacturaActivity.class);
-            intent.putExtra("USING_RETROMOCK", viewModel.getUsingRetromock().getValue());
-            startActivity(intent);
-        });
-
-        binding.btSmart.setOnClickListener(v ->
-                startActivity(new Intent(this, SmartSolarActivity.class))
-        );
+    private fun setupToggleVisibility() {
+        val isDebug = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        if (isDebug) {
+            binding?.btToggleApi?.visibility = View.VISIBLE
+        } else {
+            binding?.btToggleApi?.visibility = View.GONE
+        }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        binding = null;
+    private fun setupClickListeners() {
+        binding?.btToggleApi?.setOnClickListener { _: View? -> viewModel?.toggleApi() }
+
+        binding?.btFacturas?.setOnClickListener { _: View? ->
+            val intent = Intent(this, FacturaActivity::class.java)
+            intent.putExtra("USING_RETROMOCK", viewModel?.usingRetromock?.getValue())
+            startActivity(intent)
+        }
+
+        binding?.btSmart?.setOnClickListener { _: View? ->
+            startActivity(
+                Intent(
+                    this,
+                    SmartSolarActivity::class.java
+                )
+            )
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        binding = null
     }
 }

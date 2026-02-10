@@ -10,13 +10,9 @@ import androidx.room.PrimaryKey
  */
 @Entity(tableName = "facturas")
 class FacturaEntity {
-    @JvmField
     @PrimaryKey(autoGenerate = true)
     var id: Int = 0
-    @JvmField
-    var estado: String? = null
-    @JvmField
-    var fecha: String? = null
-    @JvmField
+    var estado: String = "Sin estado"
+    var fecha: String = ""
     var importe: Double = 0.0
 }

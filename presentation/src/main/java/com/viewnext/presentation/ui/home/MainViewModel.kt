@@ -1,12 +1,10 @@
-package com.viewnext.presentation.ui.home;
+package com.viewnext.presentation.ui.home
 
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
-
-import javax.inject.Inject;
-
-import dagger.hilt.android.lifecycle.HiltViewModel;
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
 /**
  * ViewModel principal para MainActivity que gestiona el estado del toggle Retromock/Retrofit.
@@ -16,18 +14,16 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
  * - Exponer LiveData para UI reactiva
  */
 @HiltViewModel
-public class MainViewModel extends ViewModel {
-    private final MutableLiveData<Boolean> usingRetromock = new MutableLiveData<>(true);
+class MainViewModel @Inject constructor() : ViewModel() {
+    val usingRetromock = MutableLiveData<Boolean?>(true)
 
-    @Inject
-    public MainViewModel() {
-        // Constructor vacío para Hilt
+    fun getUsingRetromock(): LiveData<Boolean?> {
+        return usingRetromock
     }
-    public LiveData<Boolean> getUsingRetromock() { return usingRetromock; }
 
     // Cambiar entre Retromock y Retrofit
-    public void toggleApi() {
-        boolean current = usingRetromock.getValue() != null ? usingRetromock.getValue() : true;
-        usingRetromock.setValue(!current);
+    fun toggleApi() {
+        val current = usingRetromock.value ?: true
+        usingRetromock.value = !current
     }
 }

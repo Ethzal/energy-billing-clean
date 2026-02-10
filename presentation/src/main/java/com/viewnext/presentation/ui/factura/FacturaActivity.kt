@@ -1,31 +1,28 @@
-package com.viewnext.presentation.ui.factura;
+package com.viewnext.presentation.ui.factura
 
-import android.annotation.SuppressLint;
-import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.Toast;
-
-import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
-
-import dagger.hilt.android.AndroidEntryPoint;
-
-import com.viewnext.presentation.R;
-import com.viewnext.presentation.databinding.ActivityFacturaBinding;
-import com.viewnext.presentation.viewmodel.FacturaViewModel;
-import com.viewnext.presentation.adapter.FacturaAdapter;
-
-import java.util.ArrayList;
-import java.util.List;
+import android.annotation.SuppressLint
+import android.content.DialogInterface
+import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.viewnext.domain.model.Factura
+import com.viewnext.presentation.R
+import com.viewnext.presentation.adapter.FacturaAdapter
+import com.viewnext.presentation.databinding.ActivityFacturaBinding
+import com.viewnext.presentation.viewmodel.FacturaViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import kotlin.Int
+import kotlin.String
 
 /**
  * Activity principal para la pantalla de facturas.
@@ -36,153 +33,155 @@ import java.util.List;
  * - Manejo de errores y mensajes de estado.
  */
 @AndroidEntryPoint
-public class FacturaActivity extends AppCompatActivity {
-    private FacturaAdapter adapter;
-    ActivityFacturaBinding binding;
-    FacturaViewModel facturaViewModel;
-    FacturaNavigator facturaNavigator;
+class FacturaActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityFacturaBinding
+    private lateinit var facturaViewModel: FacturaViewModel
+    private lateinit var adapter: FacturaAdapter
+    private lateinit var facturaNavigator: FacturaNavigator
 
     @SuppressLint("SetTextI18n")
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
-        binding = ActivityFacturaBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-        ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
-
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        this.enableEdgeToEdge()
+        binding = ActivityFacturaBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        binding.root.let {
+            ViewCompat.setOnApplyWindowInsetsListener(it) { v, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+                insets
+            }
+        }
         // Navigator
-        facturaNavigator = new FacturaNavigator(getSupportFragmentManager());
+        facturaNavigator = FacturaNavigator(supportFragmentManager)
 
         // Hacer visible el fragmento tras rotar
-        FiltroFragment filtroFragment = (FiltroFragment) getSupportFragmentManager().findFragmentByTag("FILTRO_FRAGMENT");
+        val filtroFragment =
+            supportFragmentManager.findFragmentByTag("FILTRO_FRAGMENT") as FiltroFragment?
         if (filtroFragment != null) {
-            binding.fragmentContainer.setVisibility(View.VISIBLE);
+            binding.fragmentContainer.visibility = View.VISIBLE
         }
 
         // Creacion ViewModel de Factura
-        facturaViewModel = new ViewModelProvider(this).get(FacturaViewModel.class);
+        facturaViewModel =
+            ViewModelProvider(this)[FacturaViewModel::class.java]
 
         // Adapter
-        adapter = new FacturaAdapter(new ArrayList<>());
-        binding.recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        binding.recyclerView.setAdapter(adapter);
+        adapter = FacturaAdapter(mutableListOf())
+        binding.recyclerView.setLayoutManager(LinearLayoutManager(this))
+        binding.recyclerView.setAdapter(adapter)
 
         // Pop-Up
-        adapter.setOnFacturaClickListener(factura -> new AlertDialog.Builder(FacturaActivity.this)
+        adapter.setOnFacturaClickListener { _: Factura? ->
+            AlertDialog.Builder(this@FacturaActivity)
                 .setTitle(R.string.info)
                 .setMessage(R.string.funcionalidad_no_disponible)
-                .setPositiveButton(R.string.cerrar, (dialog, which) -> dialog.dismiss())
-                .show());
+                .setPositiveButton(
+                    R.string.cerrar
+                ) { dialog: DialogInterface?, _: Int -> dialog?.dismiss() }
+                .show()
+        }
 
         // Mostrar skeleton
-        showShimmer();
+        showShimmer()
 
         // Primera vez
-        facturaViewModel.init(savedInstanceState == null, getIntent());
+        facturaViewModel.init(savedInstanceState == null, intent)
 
-        facturaViewModel.getLoading().observe(this, isLoading -> {
-            if (Boolean.TRUE.equals(isLoading)) {
-                showShimmer();
-            } else {
-                hideShimmer();
-            }
-        });
+        facturaViewModel.loading.observe(this) { isLoading ->
+            if (isLoading == true) showShimmer() else hideShimmer()
+        }
 
         // Toolbar
-        setSupportActionBar(binding.toolbar);
+        setSupportActionBar(binding.toolbar)
 
         // Botón atrás
-        binding.backButton.setOnClickListener(v -> getOnBackPressedDispatcher().onBackPressed());
+        binding.backButton.setOnClickListener { _: View? -> onBackPressedDispatcher.onBackPressed() }
 
         // Configuración del título
-        binding.toolbarTitle.setText("Facturas");
+        binding.toolbarTitle.text = "Facturas"
 
         // Actualizar RecyclerView con las nuevas facturas
-        facturaViewModel.getFacturas().observe(this, facturas -> {
-            if (facturas == null) return;
-
-            if (facturas.isEmpty() && facturaViewModel.hayFiltrosActivos()) {
-                Toast.makeText(this, "No se encontraron facturas", Toast.LENGTH_SHORT).show();
+        facturaViewModel.facturas.observe(this) { facturas ->
+            facturas?.filterNotNull()?.let { listaNoNula ->
+                if (listaNoNula.isEmpty() && facturaViewModel.hayFiltrosActivos()) {
+                    Toast.makeText(this, "No hay facturas", Toast.LENGTH_SHORT).show()
+                } else {
+                    adapter.setFacturas(listaNoNula.toMutableList())
+                }
             }
-
-            adapter.setFacturas(facturas);
-        });
+        }
 
         // Mostrar mensaje de error
-        facturaViewModel.getErrorMessage().observe(this, error -> {
+        facturaViewModel.errorMessage.observe(this, Observer { error: String? ->
             if (error != null) {
-                Toast.makeText(FacturaActivity.this, error, Toast.LENGTH_SHORT).show();
+                Toast.makeText(this@FacturaActivity, error, Toast.LENGTH_SHORT).show()
             }
-        });
+        })
     }
 
     // Mostrar/ocultar skeleton
-    private void showShimmer() {
-        binding.shimmerLayout.setVisibility(View.VISIBLE);
-        binding.shimmerLayout.startShimmer();
-        binding.recyclerView.setVisibility(View.GONE);
+    private fun showShimmer() {
+        binding.shimmerLayout.visibility = View.VISIBLE
+        binding.shimmerLayout.startShimmer()
+        binding.recyclerView.visibility = View.GONE
     }
 
-    private void hideShimmer() {
-        binding.shimmerLayout.stopShimmer();
-        binding.shimmerLayout.setVisibility(View.GONE);
-        binding.recyclerView.setVisibility(View.VISIBLE);
+    private fun hideShimmer() {
+        binding.shimmerLayout.stopShimmer()
+        binding.shimmerLayout.visibility = View.GONE
+        binding.recyclerView.visibility = View.VISIBLE
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) { // Crear menú para el botón filtros
-        getMenuInflater().inflate(R.menu.menu_factura, menu);
-        return true;
+    override fun onCreateOptionsMenu(menu: Menu): Boolean { // Crear menú para el botón filtros
+        menuInflater.inflate(R.menu.menu_factura, menu)
+        return true
     }
 
     /*******************
-     *   NAVIGATOR
+     * NAVIGATOR
      *******************/
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.action_filters) {
-            float maxImporte = facturaViewModel.getMaxImporte();
-            facturaNavigator.openFilter(maxImporte);
-            binding.fragmentContainer.setVisibility(View.VISIBLE);
-            return true;
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.action_filters) {
+            val maxImporte = facturaViewModel.getMaxImporte()
+            facturaNavigator.openFilter(maxImporte)
+            binding.fragmentContainer.visibility = View.VISIBLE
+            return true
         }
-        return super.onOptionsItemSelected(item);
+        return super.onOptionsItemSelected(item)
     }
 
-    @Override
-    public void onBackPressed() { // Sobreescribir el metodo deprecated por incompatibilidades
+    override fun onBackPressed() { // Sobreescribir el metodo deprecated por incompatibilidades
         if (!facturaNavigator.handleBackPressed()) {
-            super.onBackPressed();
+            super.onBackPressed()
         }
     }
 
-    public void restoreMainView() { // Restaurar visibilidad de la actividad Factura
-        binding.toolbar.setVisibility(View.VISIBLE);
-        binding.recyclerView.setVisibility(View.VISIBLE);
-        binding.fragmentContainer.setVisibility(View.GONE);
+    fun restoreMainView() { // Restaurar visibilidad de la actividad Factura
+        binding.toolbar.visibility = View.VISIBLE
+        binding.recyclerView.visibility = View.VISIBLE
+        binding.fragmentContainer.visibility = View.GONE
     }
 
-    public void aplicarFiltros(Bundle bundle) {
+    fun aplicarFiltros(bundle: Bundle) {
         // Recuperar los filtros desde el Bundle
-        List<String> estadosSeleccionados = bundle.getStringArrayList("ESTADOS");
-        String fechaInicio = bundle.getString("FECHA_INICIO");
-        String fechaFin = bundle.getString("FECHA_FIN");
-        Double importeMin = bundle.getDouble("IMPORTE_MIN");
-        Double importeMax = bundle.getDouble("IMPORTE_MAX");
+        val estadosSeleccionados: MutableList<String?>? = bundle.getStringArrayList("ESTADOS")
+        val fechaInicio = bundle.getString("FECHA_INICIO")
+        val fechaFin = bundle.getString("FECHA_FIN")
+        val importeMin = bundle.getDouble("IMPORTE_MIN")
+        val importeMax = bundle.getDouble("IMPORTE_MAX")
 
         // Llamar al ViewModel para aplicar los filtros
-        facturaViewModel.aplicarFiltros(estadosSeleccionados, fechaInicio, fechaFin, importeMin, importeMax);
+        facturaViewModel.aplicarFiltros(
+            estadosSeleccionados,
+            fechaInicio,
+            fechaFin,
+            importeMin,
+            importeMax
+        )
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        binding = null;
+    override fun onDestroy() {
+        super.onDestroy()
     }
 }

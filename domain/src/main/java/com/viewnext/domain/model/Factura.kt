@@ -5,9 +5,9 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 data class Factura(
-    val descEstado: String? = null,
+    val descEstado: String = "Sin estado",
     val importeOrdenacion: Double = 0.0,
-    val fecha: String? = null
+    val fecha: String = ""
 ) {
 
     companion object {

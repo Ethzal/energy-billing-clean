@@ -1,31 +1,20 @@
-package com.viewnext.presentation.ui.factura;
+package com.viewnext.presentation.ui.factura
 
-import android.annotation.SuppressLint;
-import android.app.DatePickerDialog;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
-
-import com.viewnext.presentation.databinding.FragmentFiltroBinding;
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.slider.LabelFormatter;
-import com.google.android.material.slider.RangeSlider;
-import com.viewnext.presentation.viewmodel.FacturaViewModel;
-
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
+import android.annotation.SuppressLint
+import android.app.DatePickerDialog
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.slider.LabelFormatter
+import com.viewnext.presentation.databinding.FragmentFiltroBinding
+import com.viewnext.presentation.viewmodel.FacturaViewModel
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * Fragment que permite filtrar la lista de facturas.
@@ -36,326 +25,263 @@ import java.util.Objects;
  * - Restauración automática de filtros desde el ViewModel.
  * - Aplicar, cerrar o borrar filtros, comunicándose con FacturaActivity.
  */
-public class FiltroFragment extends Fragment {
-    private FragmentFiltroBinding binding;
-    private FacturaViewModel viewModel;
-    float maxImporte;
+class FiltroFragment : Fragment() {
 
-    public FiltroFragment() { // Constructor vacío
-    }
+    private var _binding: FragmentFiltroBinding? = null
+    private val binding get() = _binding!!
+
+    private val viewModel: FacturaViewModel by activityViewModels()
+
+    private var maxImporte: Float = 0f
 
     @SuppressLint("SetTextI18n")
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        binding = FragmentFiltroBinding.inflate(inflater, container, false);
-
-        // Pasar el ViewModel de Factura
-        viewModel = new ViewModelProvider(requireActivity()).get(FacturaViewModel.class);
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentFiltroBinding.inflate(inflater, container, false)
 
         // Restaurar filtros si están disponibles
-        restoreFiltersViewModel();
+        restoreFiltersViewModel()
 
         // Botón fecha desde
-        binding.btnSelectDate.setOnClickListener(v -> showDatePicker(binding.btnSelectDate));
-        binding.btnSelectDateUntil.setOnClickListener(v -> showDatePicker(binding.btnSelectDateUntil));
+        binding.btnSelectDate.setOnClickListener { showDatePicker(binding.btnSelectDate) }
+        binding.btnSelectDateUntil.setOnClickListener { showDatePicker(binding.btnSelectDateUntil) }
 
         // Recuperar el Bundle con maxImporte
-        Bundle bundle = getArguments();
-        if (bundle != null) {
-            maxImporte = bundle.getFloat("MAX_IMPORTE", 0f);
+        arguments?.let { bundle ->
+            maxImporte = bundle.getFloat("MAX_IMPORTE", 0f)
 
             if (maxImporte > 0) {
-                binding.rangeSlider.setValueFrom(0f);
-                binding.rangeSlider.setValueTo(maxImporte);
-                binding.rangeSlider.setValues(0f, maxImporte);
+                binding.rangeSlider.valueFrom = 0f
+                binding.rangeSlider.valueTo = maxImporte
+                binding.rangeSlider.values = listOf(0f, maxImporte)
 
-                binding.tvMinValue.setText("0 €");
-                binding.tvMaxValue.setText(maxImporte + " €");
-                binding.tvMaxImporte.setText(maxImporte + " €");
+                binding.tvMinValue.text = "0 €"
+                binding.tvMaxValue.text = "$maxImporte €"
+                binding.tvMaxImporte.text = "$maxImporte €"
             } else {
-                binding.tvMinValue.setText("0 €");
-                binding.tvMaxValue.setText("0 €");
+                binding.tvMinValue.text = "0 €"
+                binding.tvMaxValue.text = "0 €"
             }
         }
-        binding.rangeSlider.setLabelBehavior(LabelFormatter.LABEL_GONE);
+
+        binding.rangeSlider.labelBehavior = LabelFormatter.LABEL_GONE
+
         // Listener para el RangeSlider
-        binding.rangeSlider.addOnChangeListener(new RangeSlider.OnChangeListener() {
-            @SuppressLint("DefaultLocale")
-            @Override
-            public void onValueChange(@NonNull RangeSlider slider, float value, boolean fromUser) {
-                List<Float> values = slider.getValues();
-                float EPSILON = 0.0001f;
-                if (values.size() == 2) {
-                    float minValue = values.get(0);
-                    float maxValue = values.get(1);
+        binding.rangeSlider.addOnChangeListener { slider, _, _ ->
+            val (minValue, maxValue) = slider.values
+            val epsilon = 0.0001f
 
-                    // Actualizar los TextViews con los valores seleccionados
-                    binding.tvMinValue.setText(String.format("%.0f €", minValue));
-                    if(maxValue >= maxImporte - EPSILON){
-                        binding.tvMaxValue.setText(String.format("%.02f €", maxValue));
-                    }else{
-                        binding.tvMaxValue.setText(String.format("%.0f €", maxValue));
-                    }
-                }
-            }
-        });
+            binding.tvMinValue.text = "%.0f €".format(minValue)
+            binding.tvMaxValue.text =
+                if (maxValue >= maxImporte - epsilon)
+                    "%.02f €".format(maxValue)
+                else
+                    "%.0f €".format(maxValue)
+        }
 
-        return binding.getRoot();
+        return binding.root
     }
 
     /**
      * Mostrar DatePicker y actualizar la fecha en el ViewModel y botón correspondiente.
      * Valida que la fecha "Desde" no sea mayor que "Hasta" y viceversa.
      */
-    private void showDatePicker(MaterialButton button) {
-        final Calendar calendar = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+    private fun showDatePicker(button: MaterialButton) {
+        val calendar = Calendar.getInstance()
+        val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
         // Cargar la fecha existente en el calendario si está disponible
         if (button == binding.btnSelectDate) {
-            String fechaInicio = viewModel.getFechaInicio().getValue();
-            if (fechaInicio != null && !fechaInicio.equals("día/mes/año")) {
-                try {
-                    calendar.setTime(Objects.requireNonNull(sdf.parse(fechaInicio)));
-                } catch (Exception e) {
-                    Log.e("FiltroFragment", "Error al parsear fecha de inicio", e);
+            viewModel.fechaInicio.value?.let { fechaInicio ->
+                if (fechaInicio != "día/mes/año") {
+                    sdf.parse(fechaInicio)?.let { calendar.time = it }
                 }
             }
         } else if (button == binding.btnSelectDateUntil) {
-            String fechaFin = viewModel.getFechaFin().getValue();
-            if (fechaFin != null && !fechaFin.equals("día/mes/año")) {
-                try {
-                    calendar.setTime(Objects.requireNonNull(sdf.parse(fechaFin)));
-                } catch (Exception e) {
-                    Log.e("FiltroFragment", "Error al parsear fecha de fin", e);
+            viewModel.fechaFin.value?.let { fechaFin ->
+                if (fechaFin != "día/mes/año") {
+                    sdf.parse(fechaFin)?.let { calendar.time = it }
                 }
             }
         }
 
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH);
-        int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH)
+        val dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH)
 
-        DatePickerDialog datePickerDialog = new DatePickerDialog(
-                requireActivity(),
-                (view, selectedYear, selectedMonth, selectedDay) -> {
-                    Calendar selectedCalendar = Calendar.getInstance();
-                    selectedCalendar.set(selectedYear, selectedMonth, selectedDay);
-                    String formattedDate = sdf.format(selectedCalendar.getTime());
+        DatePickerDialog(
+            requireActivity(),
+            { _, selectedYear, selectedMonth, selectedDay ->
+                val selectedCalendar = Calendar.getInstance().apply {
+                    set(selectedYear, selectedMonth, selectedDay)
+                }
+                val formattedDate = sdf.format(selectedCalendar.time)
 
-                    if (button == binding.btnSelectDate) {
-                        // Validar que la fecha de inicio no sea mayor que la fecha de fin
-                        String fechaFin = viewModel.getFechaFin().getValue();
-                        if (fechaFin != null && !fechaFin.equals("día/mes/año")) { // Solo validar si la fecha "Hasta" ya está seleccionada
-                            try {
-                                Calendar fechaFinCalendar = Calendar.getInstance();
-                                fechaFinCalendar.setTime(Objects.requireNonNull(sdf.parse(fechaFin)));
-                                if (formattedDate.compareTo(fechaFin)>0) {
-                                    Toast.makeText(getContext(), "La fecha de inicio no puede ser mayor que la fecha de fin", Toast.LENGTH_SHORT).show();
-                                    return;
+                if (button == binding.btnSelectDate) {
+                    // Validar que la fecha de inicio no sea mayor que la fecha de fin
+                    viewModel.fechaFin.value?.let { fechaFin ->
+                        if (fechaFin != "día/mes/año") {
+                            sdf.parse(fechaFin)?.let { finCalendar ->
+                                Calendar.getInstance().apply { time = finCalendar }
+                                if (formattedDate > fechaFin) {
+                                    Toast.makeText(context, "La fecha de inicio no puede ser mayor que la fecha de fin", Toast.LENGTH_SHORT).show()
+                                    return@DatePickerDialog
                                 }
-
-                            } catch (Exception e) {
-                                Log.e("FiltroFragment", "Error al validar fecha", e);
                             }
                         }
-                        binding.btnSelectDate.setText(formattedDate);
-                        viewModel.getFechaInicio().setValue(formattedDate);
-
-                    } else if (button == binding.btnSelectDateUntil) {
-                        // Validar que la fecha de fin no sea menor que la fecha de inicio
-                        String fechaInicio = viewModel.getFechaInicio().getValue();
-                        if (fechaInicio != null && !fechaInicio.equals("día/mes/año")) { // Solo validar si la fecha "Desde" ya está seleccionada
-                            try {
-                                Calendar fechaInicioCalendar = Calendar.getInstance();
-                                fechaInicioCalendar.setTime(Objects.requireNonNull(sdf.parse(fechaInicio)));
-
-                                if (selectedCalendar.before(fechaInicioCalendar)) {
-                                    Toast.makeText(getContext(), "La fecha de fin no puede ser menor que la fecha de inicio", Toast.LENGTH_SHORT).show();
-                                    return;
-                                }
-                            } catch (Exception e) {
-                                Log.e("FiltroFragment", "Error al validar fecha", e);
-                            }
-                        }
-                        binding.btnSelectDateUntil.setText(formattedDate);
-                        viewModel.getFechaFin().setValue(formattedDate);
                     }
-                },
-                year, month, dayOfMonth);
+                    binding.btnSelectDate.text = formattedDate
+                    viewModel.fechaInicio.value = formattedDate
 
-        datePickerDialog.show();
+                } else if (button == binding.btnSelectDateUntil) {
+                    // Validar que la fecha de fin no sea menor que la fecha de inicio
+                    viewModel.fechaInicio.value?.let { fechaInicio ->
+                        if (fechaInicio != "día/mes/año") {
+                            sdf.parse(fechaInicio)?.let { inicioCalendar ->
+                                val fechaInicioCalendar = Calendar.getInstance().apply { time = inicioCalendar }
+                                if (selectedCalendar.before(fechaInicioCalendar)) {
+                                    Toast.makeText(context, "La fecha de fin no puede ser menor que la fecha de inicio", Toast.LENGTH_SHORT).show()
+                                    return@DatePickerDialog
+                                }
+                            }
+                        }
+                    }
+                    binding.btnSelectDateUntil.text = formattedDate
+                    viewModel.fechaFin.value = formattedDate
+                }
+            },
+            year, month, dayOfMonth
+        ).show()
     }
 
     // Restaurar filtros desde el ViewModel a la vista
-    private void restoreFiltersViewModel() {
+    private fun restoreFiltersViewModel() {
         // Restaurar fecha de inicio
-        viewModel.getFechaInicio().observe(getViewLifecycleOwner(), fecha -> {
-            if (fecha != null) {
-                binding.btnSelectDate.setText(fecha);
-            }
-        });
+        viewModel.fechaInicio.observe(viewLifecycleOwner) { fecha ->
+            fecha?.let { binding.btnSelectDate.text = it }
+        }
 
         // Restaurar fecha de fin
-        viewModel.getFechaFin().observe(getViewLifecycleOwner(), fecha -> {
-            if (fecha != null) {
-                binding.btnSelectDateUntil.setText(fecha);
-            }
-        });
+        viewModel.fechaFin.observe(viewLifecycleOwner) { fecha ->
+            fecha?.let { binding.btnSelectDateUntil.text = it }
+        }
 
         // Restaurar valores del slider
-        viewModel.getValoresSlider().observe(getViewLifecycleOwner(), valores -> {
-            if (valores != null && valores.size() == 2) {
-                binding.rangeSlider.setValues(valores.get(0), valores.get(1));
-                binding.tvMinValue.setText(String.format(Locale.getDefault(), "%.0f €", valores.get(0)));
-                binding.tvMaxValue.setText(String.format(Locale.getDefault(), "%.0f €", valores.get(1)));
+        viewModel.valoresSlider.observe(viewLifecycleOwner) { valores ->
+            if (!valores.isNullOrEmpty() && valores.size == 2) {
+                binding.rangeSlider.values = valores
+                binding.tvMinValue.text = String.format(Locale.getDefault(), "%.0f €", valores[0])
+                binding.tvMaxValue.text = String.format(Locale.getDefault(), "%.0f €", valores[1])
             }
-        });
+        }
 
         // Restaurar estados seleccionados
-        viewModel.getEstados().observe(getViewLifecycleOwner(), estados -> {
-            if (estados != null) {
-                binding.checkPagadas.setChecked(estados.contains("Pagada"));
-                binding.checkPendientesPago.setChecked(estados.contains("Pendiente de pago"));
-                binding.checkCuotaFija.setChecked(estados.contains("Cuota Fija"));
-                binding.checkPlanPago.setChecked(estados.contains("Plan de pago"));
-                binding.checkAnuladas.setChecked(estados.contains("Anulada"));
+        viewModel.estados.observe(viewLifecycleOwner) { estados ->
+            estados?.let {
+                binding.checkPagadas.isChecked = it.contains("Pagada")
+                binding.checkPendientesPago.isChecked = it.contains("Pendiente de pago")
+                binding.checkCuotaFija.isChecked = it.contains("Cuota Fija")
+                binding.checkPlanPago.isChecked = it.contains("Plan de pago")
+                binding.checkAnuladas.isChecked = it.contains("Anulada")
             }
-        });
+        }
     }
 
     @SuppressLint("SetTextI18n")
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        // Botón aplicar filtros
-        binding.btnAplicar.setOnClickListener(v -> {
-            List<String> estados = getStrings();
-            String fechaInicio = binding.btnSelectDate.getText().toString();
-            String fechaFin = binding.btnSelectDateUntil.getText().toString();
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-            List<Float> valoresSlider = binding.rangeSlider.getValues();
-            float importeMin = valoresSlider.get(0);
-            float importeMax = valoresSlider.get(1);
+        // Botón aplicar filtros
+        binding.btnAplicar.setOnClickListener {
+            val estados = getStrings()
+            val fechaInicio = binding.btnSelectDate.text.toString()
+            val fechaFin = binding.btnSelectDateUntil.text.toString()
+            val valoresSlider = binding.rangeSlider.values
+            val importeMin = valoresSlider[0]
+            val importeMax = valoresSlider[1]
 
             // Guardar los filtros en el ViewModel
-            viewModel.getEstados().setValue(estados);
-            viewModel.getFechaInicio().setValue(fechaInicio);
-            viewModel.getFechaFin().setValue(fechaFin);
-            viewModel.getValoresSlider().setValue(valoresSlider);
+            viewModel.estados.value = estados
+            viewModel.fechaInicio.value = fechaInicio
+            viewModel.fechaFin.value = fechaFin
+            viewModel.valoresSlider.value = valoresSlider
 
             // Crear un Bundle con los filtros
-            Bundle bundle = new Bundle();
-            if (!estados.isEmpty()) {
-                bundle.putStringArrayList("ESTADOS", (ArrayList<String>) estados);
+            val bundle = Bundle().apply {
+                if (estados.isNotEmpty()) {
+                    putStringArrayList("ESTADOS", ArrayList(estados))
+                }
+                putString("FECHA_INICIO", fechaInicio)
+                putString("FECHA_FIN", fechaFin)
+                putDouble("IMPORTE_MIN", importeMin.toDouble())
+                putDouble("IMPORTE_MAX", importeMax.toDouble())
             }
-            bundle.putString("FECHA_INICIO", fechaInicio);
-            bundle.putString("FECHA_FIN", fechaFin);
-            bundle.putDouble("IMPORTE_MIN", importeMin);
-            bundle.putDouble("IMPORTE_MAX", importeMax);
 
             // Pasar los datos a la actividad
-            FacturaActivity activity = (FacturaActivity) getActivity();
-            if (activity != null) {
-                activity.aplicarFiltros(bundle);
-                activity.restoreMainView();
+            (activity as? FacturaActivity)?.let { activity ->
+                activity.aplicarFiltros(bundle)
+                activity.restoreMainView()
             }
-            getParentFragmentManager().popBackStack();
-        });
+            parentFragmentManager.popBackStack()
+        }
 
         // Botón cerrar fragmento filtros
-        binding.btnCerrar.setOnClickListener(v -> {
-            List<String> estados = getStrings();
-            String fechaInicio = binding.btnSelectDate.getText().toString();
-            String fechaFin = binding.btnSelectDateUntil.getText().toString();
-            List<Float> valoresSlider = binding.rangeSlider.getValues();
+        binding.btnCerrar.setOnClickListener {
+            val estados = getStrings()
+            val fechaInicio = binding.btnSelectDate.text.toString()
+            val fechaFin = binding.btnSelectDateUntil.text.toString()
+            val valoresSlider = binding.rangeSlider.values
 
             // Guardar los filtros en el ViewModel
-            viewModel.getEstados().setValue(estados);
-            viewModel.getFechaInicio().setValue(fechaInicio);
-            viewModel.getFechaFin().setValue(fechaFin);
-            viewModel.getValoresSlider().setValue(valoresSlider);
-            if (getActivity() != null) {
-                FacturaActivity activity = (FacturaActivity) getActivity();
-                activity.restoreMainView();
+            viewModel.estados.value = estados
+            viewModel.fechaInicio.value = fechaInicio
+            viewModel.fechaFin.value = fechaFin
+            viewModel.valoresSlider.value = valoresSlider
+
+            activity?.let {
+                (it as? FacturaActivity)?.restoreMainView()
             }
-            getParentFragmentManager().popBackStack();
-        });
+            parentFragmentManager.popBackStack()
+        }
 
         // Botón borrar filtros
-        binding.btnBorrar.setOnClickListener(v -> {
-            Calendar calendar = Calendar.getInstance();
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-            String fecha = sdf.format(calendar.getTime());
-            viewModel.getFechaInicio().setValue(fecha);
-            viewModel.getFechaFin().setValue(fecha);
+        binding.btnBorrar.setOnClickListener {
+            val calendar = Calendar.getInstance()
+            val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+            val fecha = sdf.format(calendar.time)
 
-            binding.btnSelectDate.setText("día/mes/año");
-            binding.btnSelectDateUntil.setText("día/mes/año");
+            viewModel.fechaInicio.value = fecha
+            viewModel.fechaFin.value = fecha
 
-            binding.rangeSlider.setValues(0f,viewModel.getMaxImporte());
+            binding.btnSelectDate.text = "día/mes/año"
+            binding.btnSelectDateUntil.text = "día/mes/año"
 
-            binding.checkPagadas.setChecked(false);
-            binding.checkAnuladas.setChecked(false);
-            binding.checkCuotaFija.setChecked(false);
-            binding.checkPendientesPago.setChecked(false);
-            binding.checkPlanPago.setChecked(false);
-        });
+            binding.rangeSlider.values = listOf(0f, maxImporte)
 
-        // Recuperar los datos tras rotar
-        viewModel.getFechaInicio().observe(getViewLifecycleOwner(), fecha -> {
-            if (fecha != null && !fecha.isEmpty()) {
-                binding.btnSelectDate.setText(fecha);
-            }
-        });
-        viewModel.getFechaFin().observe(getViewLifecycleOwner(), fecha -> {
-            if (fecha != null && !fecha.isEmpty()) {
-                binding.btnSelectDateUntil.setText(fecha);
-            }
-        });
-        viewModel.getValoresSlider().observe(getViewLifecycleOwner(), valores -> {
-            if (valores != null && valores.size() == 2) {
-                binding.rangeSlider.setValues(valores.get(0), valores.get(1));
-            }
-        });
-        viewModel.getEstados().observe(getViewLifecycleOwner(), estados -> {
-            if (estados != null) {
-                binding.checkPagadas.setChecked(estados.contains("Pagada"));
-                binding.checkPendientesPago.setChecked(estados.contains("Pendiente de pago"));
-                binding.checkCuotaFija.setChecked(estados.contains("Cuota Fija"));
-                binding.checkPlanPago.setChecked(estados.contains("Plan de pago"));
-                binding.checkAnuladas.setChecked(estados.contains("Anulada"));
-            }
-        });
+            binding.checkPagadas.isChecked = false
+            binding.checkAnuladas.isChecked = false
+            binding.checkCuotaFija.isChecked = false
+            binding.checkPendientesPago.isChecked = false
+            binding.checkPlanPago.isChecked = false
+        }
     }
 
     // Obtiene los estados seleccionados como lista de strings
-    @NonNull
-    private List<String> getStrings() { // Estados
-        List<String> estados = new ArrayList<>();
-
-        if (binding.checkPagadas.isChecked()) {
-            estados.add("Pagada");
+    private fun getStrings(): List<String> {
+        return mutableListOf<String>().apply {
+            if (binding.checkPagadas.isChecked) add("Pagada")
+            if (binding.checkPendientesPago.isChecked) add("Pendiente de pago")
+            if (binding.checkCuotaFija.isChecked) add("Cuota Fija")
+            if (binding.checkPlanPago.isChecked) add("Plan de pago")
+            if (binding.checkAnuladas.isChecked) add("Anulada")
         }
-        if (binding.checkPendientesPago.isChecked()) {
-            estados.add("Pendiente de pago");
-        }
-        if (binding.checkCuotaFija.isChecked()) {
-            estados.add("Cuota Fija");
-        }
-        if (binding.checkPlanPago.isChecked()) {
-            estados.add("Plan de pago");
-        }
-        if (binding.checkAnuladas.isChecked()) {
-            estados.add("Anulada");
-        }
-        return estados;
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
