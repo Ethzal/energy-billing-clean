@@ -16,9 +16,12 @@ Se ha generado una versión `release` de la aplicación para que pueda ser insta
 
 ## ✨ Funcionalidades y Mejoras Clave
 
+![Kotlin](https://img.shields.io/badge/Kotlin-100%25-blueviolet)
 ![Clean Architecture](https://img.shields.io/badge/Clean%20Architecture-100%25-blue)
 ![Room DB](https://img.shields.io/badge/Room%20Database-✅-green)
 ![Hilt DI](https://img.shields.io/badge/Hilt%20DI-✅-orange)
+
+*   **Migración completa Java → Kotlin (100%).**
 
 *   **Arquitectura limpia y modular:**
 Implementación estricta de Clean Architecture con capas domain, data y presentation.
@@ -65,9 +68,9 @@ El código de los tests se puede encontrar en el directorio `/domain/src/test/`.
 
 | Componente               | Tecnología / Librería                      |
 |:-------------------------|:-------------------------------------------|
-| **Lenguaje**             | `Java`                                     |
+| **Lenguaje**             | `Kotlin 100%` *(migrated from Java)*       |
 | **Arquitectura**         | `Clean Architecture`, `MVVM`               |
-| **Inyección Dependencias**| `Hilt`                                     |
+| **Inyección Dependencias**| `Hilt`                                    |
 | **Base de Datos**        | `Room Database`                            |
 | **Networking**           | `Retrofit 2`, `Gson`, `Retromock`          |
 | **Interfaz de Usuario**  | `XML`, `Material Design`, `Shimmer`        |
