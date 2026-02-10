@@ -31,7 +31,6 @@ object FacturaMapper {
      * @param facturas La lista de objetos [Factura] a convertir.
      * @return La lista de entidades [FacturaEntity] correspondientes.
      */
-    @JvmStatic
     fun toEntityList(facturas: List<Factura>): List<FacturaEntity> =
         facturas.map { toEntity(it) }
 
@@ -52,7 +51,6 @@ object FacturaMapper {
      * @param entities La lista de entidades [FacturaEntity] a convertir.
      * @return La lista de objetos de dominio [Factura] correspondientes.
      */
-    @JvmStatic
     fun toDomainList(entities: List<FacturaEntity>): List<Factura> =
         entities.map { toDomain(it) }
 }

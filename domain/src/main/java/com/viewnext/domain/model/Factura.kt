@@ -11,7 +11,6 @@ data class Factura(
 ) {
 
     companion object {
-        @JvmStatic
         fun stringToDate(fechaString: String?): Date? {
             if (fechaString.isNullOrEmpty() || fechaString == "día/mes/año") {
                 return null
