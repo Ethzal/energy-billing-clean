@@ -16,7 +16,7 @@ class GetFacturasUseCase
  */(private val repository: GetFacturasRepository) {
     // Callback para notificar el resultado de la ejecución del caso de uso
     interface Callback {
-        fun onSuccess(facturas: MutableList<Factura?>?)
+        fun onSuccess(facturas: MutableList<Factura>)
         fun onError(error: String?)
     }
 

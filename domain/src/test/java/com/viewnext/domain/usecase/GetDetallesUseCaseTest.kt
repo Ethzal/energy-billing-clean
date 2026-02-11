@@ -28,11 +28,11 @@ class GetDetallesUseCaseTest {
         // @Before
 
         // Act
-        useCase.refreshDetalles(object : DetallesCallback<MutableList<Detalles?>?> {
-            override fun onSuccess(result: MutableList<Detalles?>?) {
+        useCase.refreshDetalles(object : DetallesCallback<List<Detalles>> {
+            override fun onSuccess(result: List<Detalles>) {
             }
 
-            override fun onFailure(error: Throwable?) {
+            override fun onFailure(error: Throwable) {
             }
         })
 

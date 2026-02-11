@@ -43,14 +43,14 @@ class FilterFacturasUseCase {
             var cumpleFecha = true
 
             // Fecha INICIO
-            if (fechaInicio != null && !factura.fecha.isNullOrEmpty()) {
+            if (fechaInicio != null && factura.fecha.isNotEmpty()) {
                 stringToDate(factura.fecha)?.let { fechaFactura ->
-                    cumpleFecha = cumpleFecha && fechaFactura >= fechaInicio
+                    cumpleFecha = fechaFactura >= fechaInicio
                 }
             }
 
             // Fecha FIN
-            if (fechaFin != null && !factura.fecha.isNullOrEmpty()) {
+            if (fechaFin != null && factura.fecha.isNotEmpty()) {
                 stringToDate(factura.fecha)?.let { fechaFactura ->
                     cumpleFecha = cumpleFecha && fechaFactura <= fechaFin
                 }

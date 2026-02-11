@@ -41,7 +41,7 @@ class GetFacturasUseCaseTest {
         verifyNoMoreInteractions(mockRepository)
 
         // Simular que el repositorio devuelve éxito
-        val facturasFake = mutableListOf<Factura?>()
+        val facturasFake = mutableListOf<Factura>()
         captor.value?.onSuccess(facturasFake)
 
         verify(callback).onSuccess(facturasFake)
@@ -64,7 +64,7 @@ class GetFacturasUseCaseTest {
 
         // Error
         val errorMsg = "Error fake"
-        captor.value?.onError(errorMsg)
+        captor.value?.onError(RuntimeException(errorMsg))
 
         verify(callback).onError(errorMsg)
     }
