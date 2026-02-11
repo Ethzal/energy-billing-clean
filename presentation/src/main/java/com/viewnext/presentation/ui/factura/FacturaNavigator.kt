@@ -6,35 +6,33 @@ import com.viewnext.presentation.R
 
 class FacturaNavigator(private val fragmentManager: FragmentManager) {
     fun openFilter(maxImporte: Float) {
-        var filtroFragment =
-            fragmentManager.findFragmentByTag("FILTRO_FRAGMENT") as? FiltroFragment
+        val tag = "FILTRO_FRAGMENT"
 
-        if (filtroFragment == null) {
-            filtroFragment = FiltroFragment()
+        val filtroFragment = fragmentManager.findFragmentByTag(tag) as? FiltroFragment
+            ?: FiltroFragment().apply {
+                arguments = Bundle().apply {
+                    putFloat("MAX_IMPORTE", maxImporte)
+                }
+            }
 
-            val args = Bundle()
-            args.putFloat("MAX_IMPORTE", maxImporte)
-            filtroFragment.setArguments(args)
-
-            val transaction = fragmentManager.beginTransaction()
-            transaction.setCustomAnimations(
-                android.R.anim.fade_in,
-                android.R.anim.fade_out
-            )
-            transaction.replace(R.id.fragment_container, filtroFragment, "FILTRO_FRAGMENT")
-            transaction.addToBackStack(null)
-            transaction.commit()
+        // Solo reemplazamos si no está ya agregado
+        if (filtroFragment.isAdded.not()) {
+            fragmentManager.beginTransaction().apply {
+                setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                replace(R.id.fragment_container, filtroFragment, tag)
+                addToBackStack(null)
+                commit()
+            }
         }
     }
 
     fun handleBackPressed(): Boolean {
-        val filtroFragment =
-            fragmentManager.findFragmentById(R.id.fragment_container) as FiltroFragment?
-
-        if (filtroFragment != null && filtroFragment.isVisible) {
+        val filtroFragment = fragmentManager.findFragmentById(R.id.fragment_container) as? FiltroFragment
+        return if (filtroFragment?.isVisible == true) {
             fragmentManager.popBackStack()
-            return true
+            true
+        } else {
+            false
         }
-        return false
     }
 }

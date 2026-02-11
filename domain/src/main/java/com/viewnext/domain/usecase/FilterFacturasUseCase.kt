@@ -19,59 +19,30 @@ class FilterFacturasUseCase {
      * @return Lista de facturas que cumplen con todos los filtros
      */
     fun filtrarFacturas(
-        facturas: MutableList<Factura>,
-        estadosSeleccionados: MutableList<String?>?,
-        fechaInicioString: String?,
-        fechaFinString: String?,
-        importeMin: Double?,
-        importeMax: Double?
-    ): MutableList<Factura?> {
-        // Convertir las fechas de String a Date
-
+        facturas: List<Factura>,
+        estadosSeleccionados: List<String?>? = null,
+        fechaInicioString: String? = null,
+        fechaFinString: String? = null,
+        importeMin: Double? = null,
+        importeMax: Double? = null
+    ): List<Factura> {
         val fechaInicio = stringToDate(fechaInicioString)
         val fechaFin = stringToDate(fechaFinString)
 
-        // Crear una lista para las facturas filtradas
-        val facturasFiltradas: MutableList<Factura?> = ArrayList()
+        return facturas.filter { factura ->
+            // Filtrado por estado
+            val estadoOk = estadosSeleccionados.isNullOrEmpty() || estadosSeleccionados.contains(factura.descEstado)
 
-        // Iterar sobre todas las facturas y aplicar los filtros
-        for (factura in facturas) {
-            val cumpleEstado =
-                (estadosSeleccionados == null || estadosSeleccionados.isEmpty() || estadosSeleccionados.contains(
-                    factura.descEstado
-                ))
-            var cumpleFecha = true
+            // Filtrado por fecha
+            val fechaFactura = factura.fecha.takeIf { it.isNotEmpty() }?.let { stringToDate(it) }
+            val fechaOk = (fechaInicio == null || (fechaFactura?.let { it >= fechaInicio } ?: false)) &&
+                    (fechaFin == null || (fechaFactura?.let { it <= fechaFin } ?: false))
 
-            // Fecha INICIO
-            if (fechaInicio != null && factura.fecha.isNotEmpty()) {
-                stringToDate(factura.fecha)?.let { fechaFactura ->
-                    cumpleFecha = fechaFactura >= fechaInicio
-                }
-            }
+            // Filtrado por importe
+            val importeOk = (importeMin == null || factura.importeOrdenacion >= importeMin) &&
+                    (importeMax == null || factura.importeOrdenacion <= importeMax)
 
-            // Fecha FIN
-            if (fechaFin != null && factura.fecha.isNotEmpty()) {
-                stringToDate(factura.fecha)?.let { fechaFactura ->
-                    cumpleFecha = cumpleFecha && fechaFactura <= fechaFin
-                }
-            }
-
-            var cumpleImporte = true
-
-            if (importeMin != null) {
-                cumpleImporte = cumpleImporte and (factura.importeOrdenacion >= importeMin)
-            }
-
-            if (importeMax != null) {
-                cumpleImporte = cumpleImporte and (factura.importeOrdenacion <= importeMax)
-            }
-
-            // Si la factura cumple con todos los filtros, agregarla a la lista filtrada
-            if (cumpleEstado && cumpleFecha && cumpleImporte) {
-                facturasFiltradas.add(factura)
-            }
+            estadoOk && fechaOk && importeOk
         }
-
-        return facturasFiltradas
     }
 }
