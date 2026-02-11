@@ -5,13 +5,13 @@ import com.viewnext.domain.repository.GetFacturasRepository
 import com.viewnext.domain.repository.GetFacturasRepository.RepositoryCallback
 import org.junit.Before
 import org.junit.Test
-import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoMoreInteractions
 
 class GetFacturasUseCaseTest {
     @Mock
@@ -27,11 +27,8 @@ class GetFacturasUseCaseTest {
     @Test
     fun execute_true_callsRepositoryWithTrue() {
         // Arrange
-        val callback =
-            Mockito.mock<GetFacturasUseCase.Callback>(GetFacturasUseCase.Callback::class.java)
-
-        val captor =
-            ArgumentCaptor.forClass(RepositoryCallback::class.java)
+        val callback = mock<GetFacturasUseCase.Callback>()
+        val captor = argumentCaptor<RepositoryCallback>()
 
         // Act
         useCase.execute(true, callback)
@@ -42,7 +39,7 @@ class GetFacturasUseCaseTest {
 
         // Simular que el repositorio devuelve éxito
         val facturasFake = mutableListOf<Factura>()
-        captor.value?.onSuccess(facturasFake)
+        captor.firstValue.onSuccess(facturasFake)
 
         verify(callback).onSuccess(facturasFake)
     }
@@ -50,10 +47,8 @@ class GetFacturasUseCaseTest {
     @Test
     fun execute_false_callsRepositoryWithFalse() {
         // Arrange
-        val callback =
-            Mockito.mock<GetFacturasUseCase.Callback>(GetFacturasUseCase.Callback::class.java)
-        val captor =
-            ArgumentCaptor.forClass(RepositoryCallback::class.java)
+        val callback = mock<GetFacturasUseCase.Callback>()
+        val captor = argumentCaptor<RepositoryCallback>()
 
         // Act
         useCase.execute(false, callback)
@@ -64,7 +59,7 @@ class GetFacturasUseCaseTest {
 
         // Error
         val errorMsg = "Error fake"
-        captor.value?.onError(RuntimeException(errorMsg))
+        captor.firstValue.onError(RuntimeException(errorMsg))
 
         verify(callback).onError(errorMsg)
     }

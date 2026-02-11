@@ -47,8 +47,8 @@ class FacturaViewModel @Inject constructor(
         _loading.postValue(true)
 
         getFacturasUseCase.execute(usingRetromock, object : GetFacturasUseCase.Callback {
-            override fun onSuccess(facturas: MutableList<Factura?>?) {
-                facturasOriginales = ArrayList(facturas?.filterNotNull() ?: emptyList())
+            override fun onSuccess(facturas: MutableList<Factura>) {
+                facturasOriginales = ArrayList(facturas.toList())
 
                 if (hayFiltrosActivos()) {
                     aplicarFiltros(

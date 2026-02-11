@@ -5,11 +5,12 @@ import com.viewnext.domain.repository.DetallesCallback
 import com.viewnext.domain.repository.GetDetallesRepository
 import org.junit.Before
 import org.junit.Test
-import org.mockito.ArgumentMatchers.any
 import org.mockito.Mock
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoMoreInteractions
+import org.mockito.kotlin.argumentCaptor
+
 
 class GetDetallesUseCaseTest {
     @Mock
@@ -29,15 +30,13 @@ class GetDetallesUseCaseTest {
 
         // Act
         useCase.refreshDetalles(object : DetallesCallback<List<Detalles>> {
-            override fun onSuccess(result: List<Detalles>) {
-            }
-
-            override fun onFailure(error: Throwable) {
-            }
+            override fun onSuccess(result: List<Detalles>) {}
+            override fun onFailure(error: Throwable) {}
         })
 
         // Assert
-        verify(mockRepository).refreshDetalles(any())
+        val captor = argumentCaptor<DetallesCallback<List<Detalles>>>()
+        verify(mockRepository).refreshDetalles(captor.capture())
         verifyNoMoreInteractions(mockRepository)
     }
 }
