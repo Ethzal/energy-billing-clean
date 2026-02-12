@@ -75,15 +75,12 @@ class FiltroFragment : Fragment() {
 
         // Listener para el RangeSlider
         binding.rangeSlider.addOnChangeListener { slider, _, _ ->
-            val (minValue, maxValue) = slider.values
-            val epsilon = 0.0001f
-
-            binding.tvMinValue.text = "%.0f €".format(minValue)
-            binding.tvMaxValue.text =
-                if (maxValue >= maxImporte - epsilon)
+            slider.values.getOrNull(1)?.let { maxValue ->
+                binding.tvMinValue.text = "%.0f €".format(slider.values[0])
+                binding.tvMaxValue.text = if (maxValue >= maxImporte - 0.0001f)
                     "%.02f €".format(maxValue)
-                else
-                    "%.0f €".format(maxValue)
+                else "%.0f €".format(maxValue)
+            }
         }
 
         return binding.root
@@ -210,8 +207,8 @@ class FiltroFragment : Fragment() {
             val fechaInicio = binding.btnSelectDate.text.toString()
             val fechaFin = binding.btnSelectDateUntil.text.toString()
             val valoresSlider = binding.rangeSlider.values
-            val importeMin = valoresSlider[0]
-            val importeMax = valoresSlider[1]
+            val importeMin = valoresSlider.getOrNull(0) ?: 0f
+            val importeMax = valoresSlider.getOrNull(1) ?: maxImporte
 
             // Guardar los filtros en el ViewModel
             viewModel.setEstados(estados)
