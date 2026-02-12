@@ -60,8 +60,7 @@ class FacturaActivity : AppCompatActivity() {
         facturaNavigator = FacturaNavigator(supportFragmentManager)
 
         // Hacer visible el fragmento tras rotar
-        val filtroFragment = supportFragmentManager.findFragmentByTag("FILTRO_FRAGMENT") as? FiltroFragment
-        if (filtroFragment != null) {
+        supportFragmentManager.findFragmentByTag("FILTRO_FRAGMENT")?.let { _ ->
             binding.fragmentContainer.visibility = View.VISIBLE
         }
 

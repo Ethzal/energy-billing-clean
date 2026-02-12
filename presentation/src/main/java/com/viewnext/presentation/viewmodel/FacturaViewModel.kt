@@ -117,11 +117,14 @@ class FacturaViewModel @Inject constructor(
         val fechaFinValue = state.fechaFin
         val sliderValue = state.valoresSlider
 
-        return (estadosValue != null && estadosValue.isNotEmpty()) ||
-                (fechaInicioValue != null && fechaInicioValue != "día/mes/año") ||
-                (fechaFinValue != null && fechaFinValue != "día/mes/año") ||
-                (sliderValue != null && sliderValue.size == 2 &&
-                        (sliderValue[0] > 0f || sliderValue[1] < getMaxImporte()))
+        return listOfNotNull(
+            estadosValue?.let { it.takeIf { list -> list.isNotEmpty() } },
+            fechaInicioValue?.takeIf { it != "día/mes/año" },
+            fechaFinValue.takeIf { it != "día/mes/año" },
+            sliderValue?.takeIf {
+                it.size == 2 && (it[0] > 0f || it[1] < getMaxImporte())
+            }
+        ).isNotEmpty()
     }
 
     // ACTIVITY

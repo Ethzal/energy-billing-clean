@@ -110,12 +110,8 @@ class DetallesFragment : Fragment() {
         dialog.show()
 
         // Personalizar el botón después de mostrar el diálogo
-        val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-        if (positiveButton != null) {
-            positiveButton.background = ContextCompat.getDrawable(
-                context,
-                R.drawable.button_background
-            )
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.let { positiveButton ->
+            positiveButton.background = ContextCompat.getDrawable(context, R.drawable.button_background)
             positiveButton.setTextColor("#ff99cc00".toColorInt())
             positiveButton.setPadding(20, 10, 20, 60)
         }

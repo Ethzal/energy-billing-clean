@@ -46,22 +46,16 @@ class GetDetallesRepositoryImpl @Inject constructor(
 
     override suspend fun refreshDetalles(): Result<List<Detalles>> =
         withContext(Dispatchers.IO) {
-            try {
-                val response = apiServiceMock.detallesMock?.awaitResponse()
-                val body = response?.body()
-                if (response != null && response.isSuccessful && body != null) {
+            apiServiceMock.detallesMock
+                ?.awaitResponse()
+                ?.takeIf { it.isSuccessful }
+                ?.body()
+                ?.let { body ->
                     detallesCache.clear()
                     detallesCache.addAll(body.detalles)
-
                     _detallesFlow.value = detallesCache.toList()
-
                     Log.d("Repository", "Detalles cargados: ${detallesCache.size}")
                     Result.success(detallesCache.toList())
-                } else {
-                    Result.failure(Exception("Error al cargar detalles"))
-                }
-            } catch (t: Throwable) {
-                Result.failure(t)
-            }
+                } ?: Result.failure(Exception("Error al cargar detalles"))
         }
 }

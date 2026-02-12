@@ -41,19 +41,22 @@ class GetFacturasRepositoryImpl @Inject constructor(
     override suspend fun refreshFacturas(usingRetromock: Boolean): Result<List<Factura>> =
         withContext(Dispatchers.IO) {
             try {
-                val apiService = if (usingRetromock) apiServiceMock else apiServiceRetrofit
-                val call = if (usingRetromock) apiService.facturasMock else apiService.facturas
+                val call = if (usingRetromock) apiServiceMock.facturasMock else apiServiceRetrofit.facturas
 
-                val response = call?.awaitResponse()
-                if (response?.isSuccessful == true && response.body() != null) {
-                    val body = response.body()!!
-                    val entities = FacturaMapper.toEntityList(body.facturas)
-                    facturaDao.deleteAll()
-                    facturaDao.insertAll(entities)
-                    Result.success(FacturaMapper.toDomainList(entities))
-                } else {
-                    Result.success(getFacturasSync())
-                }
+                call?.let { nonNullCall ->
+                    nonNullCall.awaitResponse().let { response ->
+                        if (response.isSuccessful) {
+                            response.body()?.let { body ->
+                                val entities = FacturaMapper.toEntityList(body.facturas)
+                                facturaDao.deleteAll()
+                                facturaDao.insertAll(entities)
+                                Result.success(FacturaMapper.toDomainList(entities))
+                            } ?: Result.success(getFacturasSync())
+                        } else {
+                            Result.success(getFacturasSync())
+                        }
+                    }
+                } ?: Result.success(getFacturasSync())
             } catch (_: Throwable) {
                 Result.success(getFacturasSync())
             }
