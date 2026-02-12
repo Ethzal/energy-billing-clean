@@ -39,7 +39,7 @@ class FilterFacturasUseCaseTest {
 
         // Assert
         Assert.assertEquals("Debe devolver solo facturas PAGADA", 1, resultado.size.toLong())
-        Assert.assertEquals("PAGADA", resultado[0]?.descEstado)
+        Assert.assertEquals("PAGADA", resultado[0].descEstado)
     }
 
     @Test
@@ -99,13 +99,13 @@ class FilterFacturasUseCaseTest {
             1,
             resultado.size.toLong()
         )
-        Assert.assertEquals("PAGADA", resultado[0]?.descEstado)
+        Assert.assertEquals("PAGADA", resultado[0].descEstado)
     }
 
     @Test
     fun filtrarFacturas_listaVacia_devuelveListaVacia() {
         // Arrange
-        val facturas: MutableList<Factura> = ArrayList()
+        val facturas = mutableListOf<Factura>()
 
         // Act
         val resultado = useCase.filtrarFacturas(facturas, null, null, null, null, null)
@@ -118,7 +118,7 @@ class FilterFacturasUseCaseTest {
     fun filtrarFacturas_estadosVacios_devuelveTodasLasFacturas() {
         // Arrange
         val facturas = crearFacturasDePrueba()
-        val estadosSeleccionados: MutableList<String?> = ArrayList() // Lista vacía
+        val estadosSeleccionados = mutableListOf<String?>()
 
         // Act
         val resultado =

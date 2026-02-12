@@ -38,7 +38,7 @@ class FacturaViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(FacturaUiState())
     val uiState: StateFlow<FacturaUiState> = _uiState.asStateFlow()
 
-    private var facturasOriginales: MutableList<Factura> = ArrayList()
+    private var facturasOriginales: MutableList<Factura> = mutableListOf()
 
     /**
      * Carga las facturas desde el UseCase.
@@ -52,7 +52,7 @@ class FacturaViewModel @Inject constructor(
 
             getFacturasUseCase(usingRetromock).fold(
                 onSuccess = { facturas ->
-                    facturasOriginales = ArrayList(facturas)
+                    facturasOriginales = facturas.toMutableList()
 
                     if (hayFiltrosActivos()) {
                         aplicarFiltrosInterno()
@@ -162,7 +162,7 @@ class FacturaViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
-                facturas = ArrayList(resultado),
+                facturas = resultado.toMutableList(),
                 mensaje = mensaje
             )
         }
@@ -203,6 +203,6 @@ class FacturaViewModel @Inject constructor(
             sliderValues[1].toDouble()
         )
 
-        _uiState.update { it.copy(facturas = ArrayList(resultado)) }
+        _uiState.update { it.copy(facturas = resultado) }
     }
 }
