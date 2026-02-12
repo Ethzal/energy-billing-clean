@@ -1,16 +1,17 @@
 package com.viewnext.domain.repository
 
 import com.viewnext.domain.model.Detalles
+import kotlinx.coroutines.flow.Flow
 
 interface GetDetallesRepository {
 
     /**
-     * Obtiene los detalles almacenados localmente.
+     * Stream reactivo para la UI.
      */
-    fun getDetalles(): List<Detalles>
+    fun getDetallesFlow(): Flow<List<Detalles>>
 
     /**
      * Refresca los detalles desde la fuente de datos.
      */
-    fun refreshDetalles(callback: DetallesCallback<List<Detalles>>)
+    suspend fun refreshDetalles(): Result<List<Detalles>>
 }

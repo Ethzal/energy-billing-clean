@@ -1,20 +1,22 @@
 package com.viewnext.domain.usecase
 
 import com.viewnext.domain.model.Detalles
-import com.viewnext.domain.repository.DetallesCallback
 import com.viewnext.domain.repository.GetDetallesRepository
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.verify
-import org.mockito.kotlin.verifyNoMoreInteractions
-import org.mockito.kotlin.argumentCaptor
-
+import org.mockito.kotlin.whenever
 
 class GetDetallesUseCaseTest {
+
     @Mock
     private lateinit var mockRepository: GetDetallesRepository
+
     private lateinit var useCase: GetDetallesUseCase
 
     @Before
@@ -24,19 +26,18 @@ class GetDetallesUseCaseTest {
     }
 
     @Test
-    fun refreshDetalles_callsRepositoryRefresh() {
+    fun `invoke should return success when repository returns success`() = runTest {
         // Arrange
-        // @Before
+        val fakeList = emptyList<Detalles>()
+        whenever(mockRepository.refreshDetalles())
+            .thenReturn(Result.success(fakeList))
 
         // Act
-        useCase.refreshDetalles(object : DetallesCallback<List<Detalles>> {
-            override fun onSuccess(result: List<Detalles>) {}
-            override fun onFailure(error: Throwable) {}
-        })
+        val result = useCase()
 
         // Assert
-        val captor = argumentCaptor<DetallesCallback<List<Detalles>>>()
-        verify(mockRepository).refreshDetalles(captor.capture())
-        verifyNoMoreInteractions(mockRepository)
+        assertTrue(result.isSuccess)
+        assertEquals(fakeList, result.getOrNull())
+        verify(mockRepository).refreshDetalles()
     }
 }

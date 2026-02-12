@@ -1,13 +1,17 @@
 package com.viewnext.presentation.viewmodel
 
 import android.content.Intent
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.viewnext.domain.model.Factura
 import com.viewnext.domain.usecase.FilterFacturasUseCase
 import com.viewnext.domain.usecase.GetFacturasUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -20,22 +24,21 @@ class FacturaViewModel @Inject constructor(
     private val filterFacturasUseCase: FilterFacturasUseCase
 ) : ViewModel() {
 
-    private val _facturasLiveData = MutableLiveData<List<Factura>>()
-    val facturas: LiveData<List<Factura>> get() = _facturasLiveData
+    data class FacturaUiState(
+        val facturas: List<Factura> = emptyList(),
+        val isLoading: Boolean = false,
+        val error: String? = null,
+        val fechaInicio: String? = null,
+        val fechaFin: String? = null,
+        val valoresSlider: List<Float>? = null,
+        val estados: List<String>? = null,
+        val mensaje: String? = null
+    )
 
-    private val _errorMessage = MutableLiveData<String?>()
-    val errorMessage: LiveData<String?> get() = _errorMessage
-
-    private val _loading = MutableLiveData<Boolean?>()
-    val loading: LiveData<Boolean?> get() = _loading
-
-    val fechaInicio = MutableLiveData<String?>()
-    val fechaFin = MutableLiveData<String?>()
-    val valoresSlider = MutableLiveData<List<Float>?>()
-    val estados = MutableLiveData<List<String>?>()
+    private val _uiState = MutableStateFlow(FacturaUiState())
+    val uiState: StateFlow<FacturaUiState> = _uiState.asStateFlow()
 
     private var facturasOriginales: MutableList<Factura> = ArrayList()
-    private var facturasFiltradas: MutableList<Factura> = ArrayList()
 
     /**
      * Carga las facturas desde el UseCase.
@@ -44,63 +47,54 @@ class FacturaViewModel @Inject constructor(
      * @param usingRetromock si se debe usar la fuente de datos de prueba
      */
     fun loadFacturas(usingRetromock: Boolean) {
-        _loading.postValue(true)
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
 
-        getFacturasUseCase.execute(usingRetromock, object : GetFacturasUseCase.Callback {
-            override fun onSuccess(facturas: MutableList<Factura>) {
-                facturasOriginales = ArrayList(facturas.toList())
+            getFacturasUseCase(usingRetromock).fold(
+                onSuccess = { facturas ->
+                    facturasOriginales = ArrayList(facturas)
 
-                if (hayFiltrosActivos()) {
-                    aplicarFiltros(
-                        estados.value?.toMutableList(),
-                        fechaInicio.value,
-                        fechaFin.value,
-                        valoresSlider.value?.getOrNull(0)?.toDouble(),
-                        valoresSlider.value?.getOrNull(1)?.toDouble()
-                    )
-                } else {
-                    _facturasLiveData.postValue(facturasOriginales)
+                    if (hayFiltrosActivos()) {
+                        aplicarFiltrosInterno()
+                    } else {
+                        if (facturasOriginales.isEmpty()) {
+                            _uiState.update { it.copy(facturas = emptyList(), mensaje = "No hay facturas") }
+                        } else {
+                            _uiState.update { it.copy(facturas = facturasOriginales, mensaje = null) }
+                        }
+                    }
+                },
+                onFailure = { error ->
+                    _uiState.update { it.copy(error = error.message) }
                 }
+            )
 
-                _loading.postValue(false)
-            }
-
-            override fun onError(error: String?) {
-                _errorMessage.postValue(error)
-                _loading.postValue(false)
-            }
-        })
+            _uiState.update { it.copy(isLoading = false) }
+        }
     }
 
-    /**
-     * Aplica los filtros seleccionados sobre las facturas originales.
-     * Publica el resultado en facturasLiveData.
-     * @param estadosSeleccionados lista de estados a filtrar
-     * @param fechaInicio fecha mínima de la factura
-     * @param fechaFin fecha máxima de la factura
-     * @param importeMin importe mínimo
-     * @param importeMax importe máximo
-     */
-    fun aplicarFiltros(
-        estadosSeleccionados: MutableList<String?>?,
-        fechaInicio: String?,
-        fechaFin: String?,
-        importeMin: Double?,
-        importeMax: Double?
-    ) {
-        if (facturasOriginales.isEmpty()) return
+    fun clearMensaje() {
+        _uiState.update { it.copy(mensaje = null) }
+    }
 
-        val resultado = filterFacturasUseCase.filtrarFacturas(
-            facturasOriginales,
-            estadosSeleccionados,
-            fechaInicio,
-            fechaFin,
-            importeMin,
-            importeMax
-        ).filterNotNull()
+    fun setFechaInicio(fecha: String?) {
+        _uiState.update { it.copy(fechaInicio = fecha) }
+        aplicarFiltrosSiHayDatos()
+    }
 
-        facturasFiltradas = ArrayList(resultado)
-        _facturasLiveData.postValue(facturasFiltradas)
+    fun setFechaFin(fecha: String?) {
+        _uiState.update { it.copy(fechaFin = fecha) }
+        aplicarFiltrosSiHayDatos()
+    }
+
+    fun setValoresSlider(valores: List<Float>?) {
+        _uiState.update { it.copy(valoresSlider = valores) }
+        aplicarFiltrosSiHayDatos()
+    }
+
+    fun setEstados(estados: List<String>?) {
+        _uiState.update { it.copy(estados = estados) }
+        aplicarFiltrosSiHayDatos()
     }
 
     /**
@@ -117,10 +111,11 @@ class FacturaViewModel @Inject constructor(
      * @return true si hay algún filtro activo, false si no
      */
     fun hayFiltrosActivos(): Boolean {
-        val estadosValue = estados.value
-        val fechaInicioValue = fechaInicio.value
-        val fechaFinValue = fechaFin.value
-        val sliderValue = valoresSlider.value
+        val state = _uiState.value
+        val estadosValue = state.estados
+        val fechaInicioValue = state.fechaInicio
+        val fechaFinValue = state.fechaFin
+        val sliderValue = state.valoresSlider
 
         return (estadosValue != null && estadosValue.isNotEmpty()) ||
                 (fechaInicioValue != null && fechaInicioValue != "día/mes/año") ||
@@ -141,21 +136,70 @@ class FacturaViewModel @Inject constructor(
         }
     }
 
+    private fun aplicarFiltrosSiHayDatos() {
+        if (facturasOriginales.isNotEmpty()) {
+            aplicarFiltrosInterno()
+        }
+    }
+
+    private fun aplicarFiltrosInterno() {
+        val state = _uiState.value
+        val resultado = filterFacturasUseCase.filtrarFacturas(
+            facturasOriginales,
+            state.estados?.toMutableList(),
+            state.fechaInicio,
+            state.fechaFin,
+            state.valoresSlider?.getOrNull(0)?.toDouble(),
+            state.valoresSlider?.getOrNull(1)?.toDouble()
+        )
+
+        val mensaje = if (resultado.isEmpty()) {
+            "No hay facturas que coincidan con los filtros"
+        } else null
+
+        _uiState.update {
+            it.copy(
+                facturas = ArrayList(resultado),
+                mensaje = mensaje
+            )
+        }
+    }
+
+    fun clearFiltros() {
+        _uiState.update {
+            it.copy(
+                estados = null,
+                fechaInicio = null,
+                fechaFin = null,
+                valoresSlider = null
+            )
+        }
+
+        // Restaurar lista original directamente
+        if (facturasOriginales.isNotEmpty()) {
+            _uiState.update {
+                it.copy(facturas = facturasOriginales, mensaje = null)
+            }
+        }
+    }
+
     private fun aplicarFiltrosPorDefecto() {
-        val fechaInicioStr = fechaInicio.value ?: ""
-        val fechaFinStr = fechaFin.value ?: ""
-        val sliderValues = valoresSlider.value
+        val state = _uiState.value
 
-        val valoresDefecto = if (sliderValues == null || sliderValues.size < 2) {
-            listOf(0f, getMaxImporte())
-        } else sliderValues
+        val fechaInicioStr = state.fechaInicio
+        val fechaFinStr = state.fechaFin
+        val sliderValues = state.valoresSlider ?: listOf(0f, getMaxImporte())
+        val estadosDefecto = state.estados?.toMutableList() ?: mutableListOf()
 
-        aplicarFiltros(
-            (estados.value ?: emptyList()).toMutableList(),
+        val resultado = filterFacturasUseCase.filtrarFacturas(
+            facturasOriginales,
+            estadosDefecto,
             fechaInicioStr,
             fechaFinStr,
-            valoresDefecto[0].toDouble(),
-            valoresDefecto[1].toDouble()
+            sliderValues[0].toDouble(),
+            sliderValues[1].toDouble()
         )
+
+        _uiState.update { it.copy(facturas = ArrayList(resultado)) }
     }
 }

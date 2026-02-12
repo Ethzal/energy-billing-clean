@@ -2,18 +2,18 @@ package com.viewnext.data.repository
 
 import android.content.Context
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.viewnext.data.api.ApiService
 import com.viewnext.data.api.RetromockClient
 import com.viewnext.domain.model.Detalles
-import com.viewnext.domain.model.DetallesResponse
-import com.viewnext.domain.repository.DetallesCallback
 import com.viewnext.domain.repository.GetDetallesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
+import kotlin.Result
+import retrofit2.awaitResponse
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,55 +32,37 @@ class GetDetallesRepositoryImpl @Inject constructor(
 
     private val detallesCache = mutableListOf<Detalles>()
 
-    /**
-     * Obtiene el LiveData que contiene la lista de detalles. El LiveData permite observar
-     * los cambios en los detalles en tiempo real.
-     * @return Un LiveData que contiene la lista de detalles.
-     */
-    private val detallesLiveData = MutableLiveData<List<Detalles>>()
+    // Flow que expone siempre el último valor
+    private val _detallesFlow = MutableStateFlow<List<Detalles>>(emptyList())
 
-    override fun getDetalles(): List<Detalles> {
-        return detallesCache.toList()
-    }
+    override fun getDetallesFlow(): Flow<List<Detalles>> = _detallesFlow.asStateFlow()
 
     /**
-     * Realiza una solicitud a la API para obtener los detalles. Si la solicitud es exitosa,
-     * se actualiza la caché y se pasa la lista de detalles al callback.
-     * En caso de error, se pasa el error al callback.
-     * @param callback El callback que maneja el éxito o el error al obtener los detalles.
+     * Realiza una solicitud a la API para obtener la lista de [Detalles].
+     * Si la respuesta es exitosa, actualiza la caché interna y emite la nueva lista
+     * a través del flujo correspondiente.
+     * @return [Result.success] con la lista de detalles si la operación fue exitosa,
+     * o [Result.failure] en caso de error durante la solicitud o el procesamiento.
      */
-    override fun refreshDetalles(callback: DetallesCallback<List<Detalles>>) {
-        apiServiceMock.detallesMock?.enqueue(object : Callback<DetallesResponse?> {
 
-            override fun onResponse(
-                call: Call<DetallesResponse?>,
-                response: Response<DetallesResponse?>
-            ) {
-                val body = response.body()
-                if (response.isSuccessful && body != null) {
-                    // Actualiza caché
+    override suspend fun refreshDetalles(): Result<List<Detalles>> =
+        withContext(Dispatchers.IO) {
+            try {
+                val response = apiServiceMock.detallesMock?.awaitResponse()
+                val body = response?.body()
+                if (response != null && response.isSuccessful && body != null) {
                     detallesCache.clear()
                     detallesCache.addAll(body.detalles)
 
-                    // Actualiza LiveData
-                    detallesLiveData.value = detallesCache.toList()
-
-                    // Notifica callback
-                    callback.onSuccess(detallesCache.toList())
+                    _detallesFlow.value = detallesCache.toList()
 
                     Log.d("Repository", "Detalles cargados: ${detallesCache.size}")
+                    Result.success(detallesCache.toList())
                 } else {
-                    // Manejo de error si la respuesta no es exitosa
-                    callback.onFailure(Exception("Error al cargar detalles"))
+                    Result.failure(Exception("Error al cargar detalles"))
                 }
+            } catch (t: Throwable) {
+                Result.failure(t)
             }
-
-            override fun onFailure(call: Call<DetallesResponse?>, t: Throwable) {
-                // Manejo de error en fallo de red
-                callback.onFailure(t)
-            }
-        })
-    }
-
-    fun getDetallesLiveData(): LiveData<List<Detalles>> = detallesLiveData
+        }
 }

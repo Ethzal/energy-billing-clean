@@ -1,7 +1,6 @@
 package com.viewnext.domain.usecase
 
 import com.viewnext.domain.model.Detalles
-import com.viewnext.domain.repository.DetallesCallback
 import com.viewnext.domain.repository.GetDetallesRepository
 
 /**
@@ -15,17 +14,7 @@ class GetDetallesUseCase
  */(private val repository: GetDetallesRepository) {
     /**
      * Ejecuta la actualización de los detalles.
-     * @param callback Callback que será notificado con los resultados
      */
-    fun refreshDetalles(callback: DetallesCallback<List<Detalles>>) {
-        repository.refreshDetalles(object : DetallesCallback<List<Detalles>> {
-            override fun onSuccess(result: List<Detalles>) {
-                callback.onSuccess(result)
-            }
-
-            override fun onFailure(error: Throwable) {
-                callback.onFailure(error)
-            }
-        })
-    }
+    suspend operator fun invoke(): Result<List<Detalles>> =
+        repository.refreshDetalles()
 }
