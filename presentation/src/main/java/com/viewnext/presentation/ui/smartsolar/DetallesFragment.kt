@@ -20,6 +20,10 @@ import com.viewnext.presentation.viewmodel.DetallesViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.graphics.toColorInt
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 
 /**
  * Fragment que representa la sección "Detalles" dentro de Smart Solar.
@@ -43,18 +47,24 @@ class DetallesFragment : Fragment() {
         // Creación ViewModel de Detalles con UsaCase y Repository
         viewModel = ViewModelProvider(this)[DetallesViewModel::class.java]
 
-        // Cargar detalles y mostrarlos
-        viewModel?.loadDetalles()
-        viewModel?.detalles?.observe(viewLifecycleOwner) { detalles ->
-            if (!detalles.isNullOrEmpty()) {
-                val first = detalles[0]
-                binding?.cau?.text = first.cau
-                binding?.estadoSolicitud?.text = first.estadoSolicitud
-                binding?.tipoAutoconsumo?.text = first.tipoAutoconsumo
-                binding?.compensacion?.text = first.compensacion
-                binding?.potencia?.text = first.potencia
+        // StateFlow collect
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel?.uiState?.collect { state ->
+                    if (state.detalles.isNotEmpty()) {
+                        val first = state.detalles[0]
+                        binding?.cau?.text = first.cau
+                        binding?.estadoSolicitud?.text = first.estadoSolicitud
+                        binding?.tipoAutoconsumo?.text = first.tipoAutoconsumo
+                        binding?.compensacion?.text = first.compensacion
+                        binding?.potencia?.text = first.potencia
+                    }
+                }
             }
         }
+
+        // Cargar detalles y mostrarlos
+        viewModel?.loadDetalles()
 
         binding?.btPopUp?.setOnClickListener { _: View? ->
             this.showPopup(
@@ -115,7 +125,6 @@ class DetallesFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         binding?.btPopUp?.setOnClickListener(null)
-        viewModel?.detalles?.removeObservers(viewLifecycleOwner)
         binding = null
     }
 }

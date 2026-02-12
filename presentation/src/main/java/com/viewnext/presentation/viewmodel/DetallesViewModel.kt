@@ -1,13 +1,15 @@
 package com.viewnext.presentation.viewmodel
 
-import android.util.Log
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.viewnext.domain.model.Detalles
-import com.viewnext.domain.repository.DetallesCallback
 import com.viewnext.domain.repository.GetDetallesRepository
 import com.viewnext.domain.usecase.GetDetallesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -24,25 +26,40 @@ class DetallesViewModel
     private val useCase: GetDetallesUseCase,
     private val repository: GetDetallesRepository?
 ) : ViewModel() {
-    /**
-     * Devuelve LiveData con la lista de detalles.
-     * @return LiveData observables de detalles
-     */
-    val detalles: MutableLiveData<List<Detalles>> = MutableLiveData(emptyList())
+
+    data class DetallesUiState(
+        val detalles: List<Detalles> = emptyList(),
+        val isLoading: Boolean = false,
+        val error: String? = null
+    )
+
+    private val _uiState = MutableStateFlow(DetallesUiState())
+    val uiState: StateFlow<DetallesUiState> = _uiState.asStateFlow()
 
     /**
-     * Carga los detalles usando el UseCase y publica los resultados en detallesLiveData.
-     * En caso de error, actualmente no se maneja pero se podría exponer un LiveData de error.
+     * Ejecuta el caso de uso para obtener los detalles y actualiza el estado de la UI.
+     * Si la operación es exitosa, actualiza la lista de detalles y desactiva el estado de carga.
+     * En caso de error, actualiza el mensaje de error y desactiva el estado de carga.
      */
+
     fun loadDetalles() {
-        useCase.refreshDetalles(object : DetallesCallback<List<Detalles>> {
-            override fun onSuccess(result: List<Detalles>) {
-                detalles.postValue(result) // Actualiza la lista de detalles
-            }
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
 
-            override fun onFailure(error: Throwable) {
-                Log.e("DetallesViewModel", "Error al cargar detalles", error)
-            }
-        })
+            useCase().fold(
+                onSuccess = { detalles ->
+                    _uiState.value = _uiState.value.copy(
+                        detalles = detalles,
+                        isLoading = false
+                    )
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = error.message
+                    )
+                }
+            )
+        }
     }
 }
