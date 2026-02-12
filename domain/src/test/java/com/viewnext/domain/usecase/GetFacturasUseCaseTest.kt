@@ -2,20 +2,21 @@ package com.viewnext.domain.usecase
 
 import com.viewnext.domain.model.Factura
 import com.viewnext.domain.repository.GetFacturasRepository
-import com.viewnext.domain.repository.GetFacturasRepository.RepositoryCallback
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
-import org.mockito.kotlin.argumentCaptor
-import org.mockito.kotlin.eq
-import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
-import org.mockito.kotlin.verifyNoMoreInteractions
+import org.mockito.kotlin.whenever
 
 class GetFacturasUseCaseTest {
+
     @Mock
     private lateinit var mockRepository: GetFacturasRepository
+
     private lateinit var useCase: GetFacturasUseCase
 
     @Before
@@ -25,42 +26,38 @@ class GetFacturasUseCaseTest {
     }
 
     @Test
-    fun execute_true_callsRepositoryWithTrue() {
+    fun `invoke should return success when repository returns success`() = runTest {
         // Arrange
-        val callback = mock<GetFacturasUseCase.Callback>()
-        val captor = argumentCaptor<RepositoryCallback>()
+        val fakeFacturas = listOf(
+            Factura(/* tus datos fake */)
+        )
+        whenever(mockRepository.refreshFacturas(true))
+            .thenReturn(Result.success(fakeFacturas))
 
         // Act
-        useCase.execute(true, callback)
+        val result = useCase(true)
 
         // Assert
-        verify(mockRepository).refreshFacturas(eq(true), captor.capture())
-        verifyNoMoreInteractions(mockRepository)
-
-        // Simular que el repositorio devuelve éxito
-        val facturasFake = mutableListOf<Factura>()
-        captor.firstValue.onSuccess(facturasFake)
-
-        verify(callback).onSuccess(facturasFake)
+        assertTrue(result.isSuccess)
+        assertEquals(fakeFacturas, result.getOrNull())
+        verify(mockRepository).refreshFacturas(true)
     }
 
     @Test
-    fun execute_false_callsRepositoryWithFalse() {
+    fun `invoke should return error when repository returns error`() = runTest {
         // Arrange
-        val callback = mock<GetFacturasUseCase.Callback>()
-        val captor = argumentCaptor<RepositoryCallback>()
+        val errorMsg = "Error de red"
+        val exception = RuntimeException(errorMsg)
+        whenever(mockRepository.refreshFacturas(false))
+            .thenReturn(Result.failure(exception))
 
         // Act
-        useCase.execute(false, callback)
+        val result = useCase(false)
 
         // Assert
-        verify(mockRepository).refreshFacturas(eq(false), captor.capture())
-        verifyNoMoreInteractions(mockRepository)
-
-        // Error
-        val errorMsg = "Error fake"
-        captor.firstValue.onError(RuntimeException(errorMsg))
-
-        verify(callback).onError(errorMsg)
+        assertTrue(result.isFailure)
+        val error = result.exceptionOrNull()
+        assertEquals(errorMsg, error?.message)
+        verify(mockRepository).refreshFacturas(false)
     }
 }
