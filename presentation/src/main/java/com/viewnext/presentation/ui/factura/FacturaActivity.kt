@@ -8,12 +8,14 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.viewnext.domain.model.Factura
 import com.viewnext.presentation.R
@@ -23,6 +25,8 @@ import com.viewnext.presentation.viewmodel.FacturaViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlin.Int
 import kotlin.String
+import kotlinx.coroutines.launch
+
 
 /**
  * Activity principal para la pantalla de facturas.
@@ -35,7 +39,7 @@ import kotlin.String
 @AndroidEntryPoint
 class FacturaActivity : AppCompatActivity() {
     private lateinit var binding: ActivityFacturaBinding
-    private lateinit var facturaViewModel: FacturaViewModel
+    private val facturaViewModel: FacturaViewModel by viewModels()
     private lateinit var adapter: FacturaAdapter
     private lateinit var facturaNavigator: FacturaNavigator
 
@@ -56,15 +60,10 @@ class FacturaActivity : AppCompatActivity() {
         facturaNavigator = FacturaNavigator(supportFragmentManager)
 
         // Hacer visible el fragmento tras rotar
-        val filtroFragment =
-            supportFragmentManager.findFragmentByTag("FILTRO_FRAGMENT") as FiltroFragment?
+        val filtroFragment = supportFragmentManager.findFragmentByTag("FILTRO_FRAGMENT") as? FiltroFragment
         if (filtroFragment != null) {
             binding.fragmentContainer.visibility = View.VISIBLE
         }
-
-        // Creacion ViewModel de Factura
-        facturaViewModel =
-            ViewModelProvider(this)[FacturaViewModel::class.java]
 
         // Adapter
         adapter = FacturaAdapter(mutableListOf())
@@ -88,10 +87,6 @@ class FacturaActivity : AppCompatActivity() {
         // Primera vez
         facturaViewModel.init(savedInstanceState == null, intent)
 
-        facturaViewModel.loading.observe(this) { isLoading ->
-            if (isLoading == true) showShimmer() else hideShimmer()
-        }
-
         // Toolbar
         setSupportActionBar(binding.toolbar)
 
@@ -101,23 +96,27 @@ class FacturaActivity : AppCompatActivity() {
         // Configuración del título
         binding.toolbarTitle.text = "Facturas"
 
-        // Actualizar RecyclerView con las nuevas facturas
-        facturaViewModel.facturas.observe(this) { facturas ->
-            facturas?.filterNotNull()?.let { listaNoNula ->
-                if (listaNoNula.isEmpty() && facturaViewModel.hayFiltrosActivos()) {
-                    Toast.makeText(this, "No hay facturas", Toast.LENGTH_SHORT).show()
-                } else {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                facturaViewModel.uiState.collect { state ->
+                    // Loading + Shimmer
+                    if (state.isLoading) showShimmer() else hideShimmer()
+
+                    val listaNoNula = state.facturas
                     adapter.setFacturas(listaNoNula.toMutableList())
+
+                    state.mensaje?.let { mensaje ->
+                        Toast.makeText(this@FacturaActivity, mensaje, Toast.LENGTH_SHORT).show()
+                        facturaViewModel.clearMensaje()
+                    }
+
+                    // Error
+                    state.error?.let { error ->
+                        Toast.makeText(this@FacturaActivity, error, Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }
-
-        // Mostrar mensaje de error
-        facturaViewModel.errorMessage.observe(this, Observer { error: String? ->
-            if (error != null) {
-                Toast.makeText(this@FacturaActivity, error, Toast.LENGTH_SHORT).show()
-            }
-        })
     }
 
     // Mostrar/ocultar skeleton
@@ -165,20 +164,20 @@ class FacturaActivity : AppCompatActivity() {
 
     fun aplicarFiltros(bundle: Bundle) {
         // Recuperar los filtros desde el Bundle
-        val estadosSeleccionados: MutableList<String?>? = bundle.getStringArrayList("ESTADOS")
+        val estadosSeleccionados: List<String>? = bundle.getStringArrayList("ESTADOS")
         val fechaInicio = bundle.getString("FECHA_INICIO")
         val fechaFin = bundle.getString("FECHA_FIN")
-        val importeMin = bundle.getDouble("IMPORTE_MIN")
-        val importeMax = bundle.getDouble("IMPORTE_MAX")
+        val importeMin = bundle.getDouble("IMPORTE_MIN", 0.0)
+        val importeMax = bundle.getDouble("IMPORTE_MAX", 0.0)
 
         // Llamar al ViewModel para aplicar los filtros
-        facturaViewModel.aplicarFiltros(
-            estadosSeleccionados,
-            fechaInicio,
-            fechaFin,
-            importeMin,
-            importeMax
-        )
+        facturaViewModel.setEstados(estadosSeleccionados)
+        facturaViewModel.setFechaInicio(fechaInicio)
+        facturaViewModel.setFechaFin(fechaFin)
+        facturaViewModel.setValoresSlider(listOf(
+            importeMin.toFloat(),
+            importeMax.toFloat()
+        ))
     }
 
     override fun onDestroy() {

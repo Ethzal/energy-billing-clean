@@ -1,21 +1,17 @@
 package com.viewnext.domain.repository
 
 import com.viewnext.domain.model.Factura
+import kotlinx.coroutines.flow.Flow
 
 interface GetFacturasRepository {
 
     /**
-     * Obtiene las facturas almacenadas localmente.
+     * Flow reactivo.
      */
-    fun getFacturas(): List<Factura>
+    fun getFacturas(): Flow<List<Factura>>
 
     /**
      * Refresca las facturas desde la fuente de datos.
      */
-    fun refreshFacturas(usingRetromock: Boolean, callback: RepositoryCallback)
-
-    interface RepositoryCallback {
-        fun onSuccess(facturas: List<Factura>)
-        fun onError(error: Throwable)
-    }
+    suspend fun refreshFacturas(usingRetromock: Boolean): Result<List<Factura>>
 }

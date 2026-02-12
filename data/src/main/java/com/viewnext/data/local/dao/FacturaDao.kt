@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.viewnext.data.local.entity.FacturaEntity
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Interfaz de acceso a los datos de la tabla "facturas" en la base de datos.
@@ -22,7 +23,7 @@ interface FacturaDao {
      * @return [LiveData] que contiene una lista de todas las facturas en la base de datos.
      */
     @Query("SELECT * FROM facturas")
-    fun getFacturas(): LiveData<List<FacturaEntity>>
+    fun getFacturas(): Flow<List<FacturaEntity>>
 
     /**
      * Obtiene todas las facturas de la base de datos de manera síncrona.
