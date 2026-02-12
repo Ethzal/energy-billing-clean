@@ -14,7 +14,7 @@ import javax.inject.Inject
 
 /**
  * ViewModel encargado de manejar la lógica de presentación de los detalles.
- * Gestiona la carga de datos desde el UseCase y expone los resultados mediante LiveData.
+ * Gestiona la carga de datos desde el UseCase y expone los resultados con Flow.
  */
 @HiltViewModel
 class DetallesViewModel

@@ -1,6 +1,5 @@
 package com.viewnext.data.local.dao
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -17,10 +16,10 @@ interface FacturaDao {
 
     /**
      * Obtiene todas las facturas de la base de datos de manera asíncrona.
-     * El resultado es devuelto como un [LiveData], lo que permite
+     * El resultado es devuelto como un [Flow], lo que permite
      * que cualquier cambio en la base de datos sea observado en tiempo real.
      *
-     * @return [LiveData] que contiene una lista de todas las facturas en la base de datos.
+     * @return [Flow] que contiene una lista de todas las facturas en la base de datos.
      */
     @Query("SELECT * FROM facturas")
     fun getFacturas(): Flow<List<FacturaEntity>>

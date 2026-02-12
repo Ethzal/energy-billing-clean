@@ -41,7 +41,6 @@ dependencies {
     // Room
     implementation(libs.room.runtime)
     implementation(libs.room.common.jvm)
-    implementation(libs.lifecycle.livedata.core)
     kapt(libs.room.compiler)
 
     // Testing

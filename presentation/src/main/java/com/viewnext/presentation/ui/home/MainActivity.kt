@@ -5,10 +5,10 @@ import android.content.pm.ApplicationInfo
 import android.os.Bundle
 import android.view.View
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.ViewModelProvider
 import com.viewnext.presentation.databinding.ActivityMainBinding
 import com.viewnext.presentation.ui.factura.FacturaActivity
 import com.viewnext.presentation.ui.smartsolar.SmartSolarActivity
@@ -23,7 +23,7 @@ import dagger.hilt.android.AndroidEntryPoint
  */
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
-    var viewModel: MainViewModel? = null
+    private val viewModel: MainViewModel by viewModels()
     private var binding: ActivityMainBinding? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,8 +32,6 @@ class MainActivity : AppCompatActivity() {
         this.enableEdgeToEdge() // La interfaz se extiende por toda la pantalla
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding?.getRoot())
-
-        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
         setupWindowInsets()
         setupToggleVisibility()
@@ -62,11 +60,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
-        binding?.btToggleApi?.setOnClickListener { _: View? -> viewModel?.toggleApi() }
+        binding?.btToggleApi?.setOnClickListener { _: View? -> viewModel.toggleApi() }
 
         binding?.btFacturas?.setOnClickListener { _: View? ->
             val intent = Intent(this, FacturaActivity::class.java)
-            intent.putExtra("USING_RETROMOCK", viewModel?.usingRetromock?.getValue())
+            intent.putExtra("USING_RETROMOCK", viewModel.usingRetromock.value)
             startActivity(intent)
         }
 

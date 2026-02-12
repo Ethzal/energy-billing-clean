@@ -20,7 +20,6 @@ import javax.inject.Singleton
 /**
  * Implementación del repositorio GetDetallesRepository. Esta clase se encarga de obtener los detalles
  * de una fuente remota (simulada por Retromock) y almacenarlos en una lista en caché.
- * También proporciona un métodos para obtener los detalles como un LiveData.
  */
 @Singleton
 class GetDetallesRepositoryImpl @Inject constructor(

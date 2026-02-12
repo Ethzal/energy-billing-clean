@@ -1,9 +1,10 @@
 package com.viewnext.presentation.ui.home
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 /**
@@ -11,19 +12,17 @@ import javax.inject.Inject
  * Funciones principales:
  * - Mantener estado reactivo del API activo (Retromock/Retrofit)
  * - Alternar entre APIs mediante toggle
- * - Exponer LiveData para UI reactiva
  */
 @HiltViewModel
 class MainViewModel @Inject constructor() : ViewModel() {
-    val usingRetromock = MutableLiveData<Boolean?>(true)
 
-    fun getUsingRetromock(): LiveData<Boolean?> {
-        return usingRetromock
-    }
+    // Estado interno mutable
+    private val _usingRetromock = MutableStateFlow(true)
 
-    // Cambiar entre Retromock y Retrofit
+    // Exposición inmutable
+    val usingRetromock: StateFlow<Boolean> = _usingRetromock.asStateFlow()
+
     fun toggleApi() {
-        val current = usingRetromock.value ?: true
-        usingRetromock.value = !current
+        _usingRetromock.value = !_usingRetromock.value
     }
 }

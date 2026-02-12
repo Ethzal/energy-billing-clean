@@ -29,7 +29,6 @@ import kotlinx.coroutines.launch
  * Fragment que representa la sección "Detalles" dentro de Smart Solar.
  * Se encarga de:
  * - Cargar y mostrar detalles del autoconsumo usando DetallesViewModel.
- * - Observar LiveData para actualizar la UI de manera reactiva.
  * - Mostrar un pop-up informativo sobre el estado de la solicitud.
  */
 @AndroidEntryPoint

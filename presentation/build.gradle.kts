@@ -47,8 +47,6 @@ dependencies {
     implementation(libs.lifecycle.viewmodel)
     implementation(libs.lifecycle.viewmodel.ktx)
     implementation(libs.lifecycle.viewmodel.savedstate)
-    implementation(libs.lifecycle.livedata)
-    implementation(libs.lifecycle.livedata.ktx)
     implementation(libs.lifecycle.runtime)
     kapt(libs.lifecycle.compiler)
     implementation(libs.androidx.fragment.ktx)

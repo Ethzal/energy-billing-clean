@@ -30,7 +30,7 @@ Repositorios e interfaces claramente separados para mejorar la mantenibilidad y 
 *   **Gestión de datos robusta:**
 Integración de Room Database para persistencia local.
 Repositorios que combinan API y almacenamiento local de forma eficiente.
-Manejo de LiveData para reflejar cambios en la UI de manera reactiva.
+Manejo de Flow para reflejar cambios en la UI de manera reactiva.
 
 *   **Mejoras en la UI/UX:**
 Skeleton shimmer loading en la lista de facturas.
@@ -40,7 +40,7 @@ Rotación circular de mocks con Retromock para pruebas visuales.
 
 La base de este proyecto es una implementación estricta de **Clean Architecture**, separando el código en tres capas principales:
 
-*   **Capa de Presentación (Presentation):** Implementada con el patrón **MVVM (Model-View-ViewModel)**. Se encarga de la lógica de la UI y de la gestión del estado, utilizando componentes como `ViewModel` y `LiveData`.
+*   **Capa de Presentación (Presentation):** Implementada con el patrón **MVVM (Model-View-ViewModel)**. Se encarga de la lógica de la UI y de la gestión del estado, utilizando componentes como `ViewModel` y `Flow`.
 *   **Capa de Dominio (Domain):** Contiene la lógica de negocio pura y los casos de uso. Es independiente de cualquier framework, lo que la hace 100% testeable.
 *   **Capa de Datos (Data):** Gestiona el origen de los datos, ya sea de una fuente remota (API) o local. Implementa el patrón Repositorio para abstraer el origen de los datos.
 
@@ -59,7 +59,7 @@ EnergyApp/
 Una de las prioridades de este proyecto fue asegurar la calidad y la robustez del código a través de **tests unitarios**.
 
 *   **Frameworks Utilizados:** Se utilizó **JUnit 4** para la estructura de los tests y **Mockito** para crear objetos mock y simular las dependencias (como los Casos de Uso).
-*   **Componentes Testeados:** La cobertura en Domain Layer (Use Cases) y de presentación, específicamente los `ViewModel`, para validar la lógica de negocio y la correcta actualización del estado de la UI a través de `LiveData`.
+*   **Componentes Testeados:** La cobertura en Domain Layer (Use Cases) y de presentación, específicamente los `ViewModel`, para validar la lógica de negocio y la correcta actualización del estado de la UI a través de `Flow`.
 *   **Técnicas Avanzadas:** Se utilizó `InstantTaskExecutorRule` para manejar los componentes de Arquitectura de Android fuera del hilo principal y se aplicó **reflexión** para la inyección de dependencias en un entorno de testing.
 
 El código de los tests se puede encontrar en el directorio `/domain/src/test/`.
@@ -82,6 +82,6 @@ El código de los tests se puede encontrar en el directorio `/domain/src/test/`.
 Esta fue una experiencia de aprendizaje profundo donde pude aplicar en un entorno práctico conceptos teóricos complejos. Los mayores aprendizajes fueron:
 
 1.  **El valor de un código desacoplado:** La facilidad para modificar o testear una parte de la aplicación sin afectar a las demás.
-2.  **Gestión del estado de la UI:** El uso de `ViewModel` y `LiveData` para crear interfaces robustas y resistentes a los cambios de configuración.
+2.  **Gestión del estado de la UI:** El uso de `ViewModel` y `Flow` para crear interfaces robustas y resistentes a los cambios de configuración.
 3.  **Flujo de trabajo profesional con Git:** La importancia de trabajar con ramas (`feature-branches`) y realizar Pull Requests para un desarrollo ordenado.
 4.  **Testing unitario:** La importancia crítica del testing unitario para validar la lógica de forma aislada y permitir refactorizar el código con seguridad.
