@@ -97,21 +97,20 @@ class FacturaActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                facturaViewModel.uiState.collect { state ->
-                    // Loading + Shimmer
-                    if (state.isLoading) showShimmer() else hideShimmer()
+                launch {
+                    facturaViewModel.uiState.collect { state ->
+                        if (state.isLoading) showShimmer() else hideShimmer()
+                        adapter.setFacturas(state.facturas.toMutableList())
 
-                    val listaNoNula = state.facturas
-                    adapter.setFacturas(listaNoNula.toMutableList())
-
-                    state.mensaje?.let { mensaje ->
-                        Toast.makeText(this@FacturaActivity, mensaje, Toast.LENGTH_SHORT).show()
-                        facturaViewModel.clearMensaje()
+                        state.error?.let { error ->
+                            Toast.makeText(this@FacturaActivity, error, Toast.LENGTH_SHORT).show()
+                        }
                     }
+                }
 
-                    // Error
-                    state.error?.let { error ->
-                        Toast.makeText(this@FacturaActivity, error, Toast.LENGTH_SHORT).show()
+                launch {
+                    facturaViewModel.mensajes.collect { mensaje ->
+                        Toast.makeText(this@FacturaActivity, mensaje, Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -166,17 +165,11 @@ class FacturaActivity : AppCompatActivity() {
         val estadosSeleccionados: List<String>? = bundle.getStringArrayList("ESTADOS")
         val fechaInicio = bundle.getString("FECHA_INICIO")
         val fechaFin = bundle.getString("FECHA_FIN")
-        val importeMin = bundle.getDouble("IMPORTE_MIN", 0.0)
-        val importeMax = bundle.getDouble("IMPORTE_MAX", 0.0)
+        val importeMin = bundle.getDouble("IMPORTE_MIN", 0.0).toFloat()
+        val importeMax = bundle.getDouble("IMPORTE_MAX", 0.0).toFloat()
 
         // Llamar al ViewModel para aplicar los filtros
-        facturaViewModel.setEstados(estadosSeleccionados)
-        facturaViewModel.setFechaInicio(fechaInicio)
-        facturaViewModel.setFechaFin(fechaFin)
-        facturaViewModel.setValoresSlider(listOf(
-            importeMin.toFloat(),
-            importeMax.toFloat()
-        ))
+        facturaViewModel.aplicarTodosLosFiltros(estadosSeleccionados, fechaInicio, fechaFin, listOf(importeMin, importeMax))
     }
 
     override fun onDestroy() {

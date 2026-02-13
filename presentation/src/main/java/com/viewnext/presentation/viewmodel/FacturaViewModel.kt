@@ -7,8 +7,10 @@ import com.viewnext.domain.model.Factura
 import com.viewnext.domain.usecase.FilterFacturasUseCase
 import com.viewnext.domain.usecase.GetFacturasUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -32,11 +34,12 @@ class FacturaViewModel @Inject constructor(
         val fechaFin: String? = null,
         val valoresSlider: List<Float>? = null,
         val estados: List<String>? = null,
-        val mensaje: String? = null
     )
 
     private val _uiState = MutableStateFlow(FacturaUiState())
     val uiState: StateFlow<FacturaUiState> = _uiState.asStateFlow()
+    private val _mensajes = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val mensajes = _mensajes.asSharedFlow()
 
     private var facturasOriginales: MutableList<Factura> = mutableListOf()
 
@@ -58,9 +61,9 @@ class FacturaViewModel @Inject constructor(
                         aplicarFiltrosInterno()
                     } else {
                         if (facturasOriginales.isEmpty()) {
-                            _uiState.update { it.copy(facturas = emptyList(), mensaje = "No hay facturas") }
+                            _uiState.update { it.copy(facturas = emptyList()) }
                         } else {
-                            _uiState.update { it.copy(facturas = facturasOriginales, mensaje = null) }
+                            _uiState.update { it.copy(facturas = facturasOriginales) }
                         }
                     }
                 },
@@ -73,10 +76,6 @@ class FacturaViewModel @Inject constructor(
         }
     }
 
-    fun clearMensaje() {
-        _uiState.update { it.copy(mensaje = null) }
-    }
-
     fun setFechaInicio(fecha: String?) {
         _uiState.update { it.copy(fechaInicio = fecha) }
         aplicarFiltrosSiHayDatos()
@@ -84,16 +83,6 @@ class FacturaViewModel @Inject constructor(
 
     fun setFechaFin(fecha: String?) {
         _uiState.update { it.copy(fechaFin = fecha) }
-        aplicarFiltrosSiHayDatos()
-    }
-
-    fun setValoresSlider(valores: List<Float>?) {
-        _uiState.update { it.copy(valoresSlider = valores) }
-        aplicarFiltrosSiHayDatos()
-    }
-
-    fun setEstados(estados: List<String>?) {
-        _uiState.update { it.copy(estados = estados) }
         aplicarFiltrosSiHayDatos()
     }
 
@@ -156,15 +145,34 @@ class FacturaViewModel @Inject constructor(
             state.valoresSlider?.getOrNull(1)?.toDouble()
         )
 
-        val mensaje = if (resultado.isEmpty()) {
-            "No hay facturas que coincidan con los filtros"
-        } else null
+        if (resultado.isEmpty()) {
+            _mensajes.tryEmit("No hay facturas que coincidan con los filtros")
+        }
 
         _uiState.update {
             it.copy(
                 facturas = resultado.toMutableList(),
-                mensaje = mensaje
             )
+        }
+    }
+
+    fun aplicarTodosLosFiltros(
+        estados: List<String>?,
+        fechaInicio: String?,
+        fechaFin: String?,
+        valoresSlider: List<Float>?
+    ) {
+        _uiState.update {
+            it.copy(
+                estados = estados,
+                fechaInicio = fechaInicio,
+                fechaFin = fechaFin,
+                valoresSlider = valoresSlider
+            )
+        }
+
+        if (facturasOriginales.isNotEmpty()) {
+            aplicarFiltrosInterno()
         }
     }
 
@@ -181,7 +189,7 @@ class FacturaViewModel @Inject constructor(
         // Restaurar lista original directamente
         if (facturasOriginales.isNotEmpty()) {
             _uiState.update {
-                it.copy(facturas = facturasOriginales, mensaje = null)
+                it.copy(facturas = facturasOriginales)
             }
         }
     }

@@ -210,12 +210,6 @@ class FiltroFragment : Fragment() {
             val importeMin = valoresSlider.getOrNull(0) ?: 0f
             val importeMax = valoresSlider.getOrNull(1) ?: maxImporte
 
-            // Guardar los filtros en el ViewModel
-            viewModel.setEstados(estados)
-            viewModel.setFechaInicio(fechaInicio)
-            viewModel.setFechaFin(fechaFin)
-            viewModel.setValoresSlider(valoresSlider)
-
             // Crear un Bundle con los filtros
             val bundle = Bundle().apply {
                 if (estados.isNotEmpty()) {
@@ -243,10 +237,7 @@ class FiltroFragment : Fragment() {
             val valoresSlider = binding.rangeSlider.values
 
             // Guardar los filtros en el ViewModel
-            viewModel.setEstados(estados)
-            viewModel.setFechaInicio(fechaInicio)
-            viewModel.setFechaFin(fechaFin)
-            viewModel.setValoresSlider(valoresSlider)
+            viewModel.aplicarTodosLosFiltros(estados, fechaInicio, fechaFin, valoresSlider)
 
             activity?.let {
                 (it as? FacturaActivity)?.restoreMainView()
@@ -256,13 +247,6 @@ class FiltroFragment : Fragment() {
 
         // Botón borrar filtros
         binding.btnBorrar.setOnClickListener {
-            val calendar = Calendar.getInstance()
-            val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-            val fecha = sdf.format(calendar.time)
-
-            viewModel.setFechaInicio(fecha)
-            viewModel.setFechaFin(fecha)
-            viewModel.setValoresSlider(listOf(0f, maxImporte))
             viewModel.clearFiltros()
 
             binding.btnSelectDate.text = "día/mes/año"
