@@ -13,10 +13,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.viewnext.presentation.viewmodel.DetallesViewModel
 import kotlinx.coroutines.launch
-
+import com.viewnext.presentation.ui.theme.HoloGreenLight
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -30,7 +32,14 @@ fun SmartSolarScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Smart Solar") },
+                title = { Text(
+                    "Smart Solar",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                ) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    navigationIconContentColor = HoloGreenLight
+                ),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
