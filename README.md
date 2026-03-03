@@ -18,6 +18,7 @@ Se ha generado una versión `release` de la aplicación para que pueda ser insta
 
 ![Kotlin](https://img.shields.io/badge/Kotlin-100%25-blueviolet)
 ![Clean Architecture](https://img.shields.io/badge/Clean%20Architecture-100%25-blue)
+![Compose](https://img.shields.io/badge/Jetpack%20Compose-100%25-orange)
 ![Room DB](https://img.shields.io/badge/Room%20Database-✅-green)
 ![Hilt DI](https://img.shields.io/badge/Hilt%20DI-✅-orange)
 
@@ -52,7 +53,7 @@ EnergyApp/
 - **app/** — Presentation + DI (Hilt)
 - **data/** — Room + Retrofit + Retromock
 - **domain/** — Use Cases + Models + Interfaces (Pure Logic)
-- **presentation/** — Activities + Fragments + ViewModels
+- **presentation/** — Compose Screens + ViewModels + Activities
 
 ## 🧪 Testing y Calidad de Código
 
@@ -73,7 +74,7 @@ El código de los tests se puede encontrar en el directorio `/domain/src/test/`.
 | **Inyección Dependencias**| `Hilt`                                    |
 | **Base de Datos**        | `Room Database`                            |
 | **Networking**           | `Retrofit 2`, `Gson`, `Retromock`          |
-| **Interfaz de Usuario**  | `XML`, `Material Design`, `Shimmer`        |
+| **Interfaz de Usuario**  | `Jetpack Compose`, `Material Design`, `Shimmer`        |
 | **Control de Versiones** | `Git`, `GitHub Flow`                       |
 | **Testing**              | `JUnit 4`, `Mockito`, `AndroidX Test Core` |
 
@@ -85,3 +86,5 @@ Esta fue una experiencia de aprendizaje profundo donde pude aplicar en un entorn
 2.  **Gestión del estado de la UI:** El uso de `ViewModel` y `Flow` para crear interfaces robustas y resistentes a los cambios de configuración.
 3.  **Flujo de trabajo profesional con Git:** La importancia de trabajar con ramas (`feature-branches`) y realizar Pull Requests para un desarrollo ordenado.
 4.  **Testing unitario:** La importancia crítica del testing unitario para validar la lógica de forma aislada y permitir refactorizar el código con seguridad.
+5.  **Jetpack Compose en producción:** Migración completa de XML/Fragments → Composable Functions manteniendo toda la funcionalidad existente. Beneficios en mantenibilidad y rendimiento de la UI.
+
