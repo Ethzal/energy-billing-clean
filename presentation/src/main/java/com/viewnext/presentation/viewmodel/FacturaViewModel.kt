@@ -1,6 +1,5 @@
 package com.viewnext.presentation.viewmodel
 
-import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.viewnext.domain.model.Factura
@@ -86,6 +85,17 @@ class FacturaViewModel @Inject constructor(
         aplicarFiltrosSiHayDatos()
     }
 
+    fun setEstados(estados: List<String>?) {
+        _uiState.update { it.copy(estados = estados) }
+        aplicarFiltrosSiHayDatos()
+    }
+
+    fun setValoresSlider(rango: List<Float>) {
+        _uiState.update {
+            it.copy(valoresSlider = rango)
+        }
+    }
+
     /**
      * Obtiene el importe máximo de las facturas originales.
      * @return importe máximo o 0 si no hay facturas
@@ -114,18 +124,6 @@ class FacturaViewModel @Inject constructor(
                 it.size == 2 && (it[0] > 0f || it[1] < getMaxImporte())
             }
         ).isNotEmpty()
-    }
-
-    // ACTIVITY
-    fun init(primeraVez: Boolean, intent: Intent) {
-        if (primeraVez) {
-            val usingRetromock = intent.getBooleanExtra("USING_RETROMOCK", false)
-            if (hayFiltrosActivos()) {
-                aplicarFiltrosPorDefecto()
-            } else {
-                loadFacturas(usingRetromock)
-            }
-        }
     }
 
     private fun aplicarFiltrosSiHayDatos() {
