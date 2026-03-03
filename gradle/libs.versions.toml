@@ -20,6 +20,7 @@ activity = "1.10.0"
 constraintlayout = "2.2.0"
 mockitoCore = "5.15.2"
 mockitoKotlin = "6.2.3"
+navigationCompose = "2.9.7"
 okhttp = "4.12.0"
 recyclerview = "1.4.0"
 recyclerviewSelection = "1.1.0"
@@ -47,6 +48,7 @@ androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling
 androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragmentKtx" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 androidx-lifecycle-viewmodel-ktx-v286 = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtxVersion" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 converter-scalars = { module = "com.squareup.retrofit2:converter-scalars", version.ref = "converterGson" }
 core-testing = { module = "androidx.arch.core:core-testing", version.ref = "coreTesting" }

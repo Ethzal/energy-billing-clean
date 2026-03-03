@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.material3.ExperimentalMaterial3Api
-import com.viewnext.presentation.composables.factura.FacturaScreen
+import com.viewnext.presentation.navigation.FacturaNavHost
 import com.viewnext.presentation.ui.theme.EnergyAppTheme
 import com.viewnext.presentation.viewmodel.FacturaViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -28,15 +28,19 @@ class FacturaActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        val usingRetromock = intent.getBooleanExtra("USING_RETROMOCK", false)
+
         setContent {
             EnergyAppTheme {
-                FacturaScreen(
+                FacturaNavHost(
                     viewModel = viewModel,
-                    onBack = { finish() },
-                    usingRetromock = intent.getBooleanExtra("USING_RETROMOCK", false),
-                    intent = intent
+                    usingRetromock = usingRetromock,
+                    onFinishActivity = { finish() }
                 )
             }
         }
+
+        viewModel.loadFacturas(usingRetromock)
     }
 }

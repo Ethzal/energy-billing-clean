@@ -1,6 +1,5 @@
 package com.viewnext.presentation.composables.factura
 
-import android.content.Intent
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -22,20 +21,17 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.viewnext.presentation.ui.theme.HoloGreenLight
 import com.viewnext.presentation.viewmodel.FacturaViewModel
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,28 +48,16 @@ fun FacturaScreen(
     viewModel: FacturaViewModel,
     onBack: () -> Unit,
     usingRetromock: Boolean,
-    intent: Intent
+    onOpenFilters: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val mensajes by viewModel.mensajes.collectAsState("")
 
-    var showFilterSheet by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState()
-    val scope = rememberCoroutineScope()
+
     val context = LocalContext.current
 
-    BackHandler {
-        if (showFilterSheet) {
-            showFilterSheet = false
-        } else {
-            onBack()
-        }
-    }
-
-    LaunchedEffect(usingRetromock) {
-        viewModel.init(true, intent)
-    }
+    BackHandler { onBack() }
 
     // Toast para errores
     LaunchedEffect(mensajes) {
@@ -87,15 +70,13 @@ fun FacturaScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    // Deja el título vacío o pon algo neutro
                     Text("")
                 },
                 navigationIcon = {
-                    // Row clicable para icono + texto
                     Row(
                         modifier = Modifier
                             .padding(start = 8.dp)
-                            .clickable { onBack() }, // acción al hacer click
+                            .clickable { onBack() },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
@@ -112,7 +93,7 @@ fun FacturaScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showFilterSheet = true }) {
+                    IconButton(onClick = onOpenFilters) {
                         Icon(Icons.Default.FilterList, "Filtros")
                     }
                 },
@@ -153,23 +134,6 @@ fun FacturaScreen(
                     }
                 }
             }
-        }
-    }
-
-    if (showFilterSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showFilterSheet = false },
-            sheetState = sheetState
-        ) {
-            FilterSheetContent(
-                viewModel = viewModel,
-                maxImporte = viewModel.getMaxImporte(),
-                onDismiss = {
-                    scope.launch { sheetState.hide() }
-                    showFilterSheet = false
-                },
-                sheetState = sheetState
-            )
         }
     }
 
