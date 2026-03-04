@@ -24,7 +24,7 @@ fun FilterButton(
         onClick = {
             debounceJob?.cancel()
             debounceJob = coroutineScope.launch {
-                delay(300)
+                delay(100)
                 onClick()
             }
         }

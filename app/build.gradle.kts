@@ -57,8 +57,6 @@ dependencies {
 
     // UI
     implementation(libs.androidx.appcompat)
-    implementation(libs.google.material)
-    implementation(libs.shimmer)
 
     // Testing
     testImplementation(libs.junit)

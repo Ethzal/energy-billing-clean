@@ -39,10 +39,6 @@ dependencies {
     // UI XML
     implementation(libs.appcompat)
     implementation(libs.material)
-    implementation(libs.activity)
-    implementation(libs.constraintlayout)
-    implementation(libs.recyclerview)
-    implementation(libs.recyclerview.selection)
     implementation(libs.shimmer)
 
     // UI COMPOSE

@@ -64,10 +64,7 @@ fun FilterScreenFull(
                             contentDescription = "Cerrar"
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    actionIconContentColor = HoloGreenLight
-                )
+                }
             )
         }
     ) { paddingValues ->
