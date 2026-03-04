@@ -11,19 +11,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.viewnext.presentation.viewmodel.DetallesViewModel
 import kotlinx.coroutines.launch
 import com.viewnext.presentation.ui.theme.HoloGreenLight
+import com.viewnext.presentation.R
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -38,19 +38,17 @@ fun SmartSolarScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    // Deja el título vacío o pon algo neutro
                     Text("")
                 },
                 navigationIcon = {
-                    // Row clicable para icono + texto
                     Row(
                         modifier = Modifier
                             .padding(start = 8.dp)
-                            .clickable { onBack() }, // acción al hacer click
+                            .clickable { onBack() },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            painter = painterResource(id = R.drawable.baseline_arrow_back_ios_24),
                             contentDescription = "Atrás",
                             tint = HoloGreenLight
                         )
