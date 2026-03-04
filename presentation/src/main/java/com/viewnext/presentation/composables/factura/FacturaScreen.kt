@@ -15,11 +15,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -36,9 +34,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.viewnext.presentation.R
+import com.viewnext.presentation.composables.common.FilterButton
 import com.viewnext.presentation.ui.theme.HoloGreenLight
 import com.viewnext.presentation.viewmodel.FacturaViewModel
 
@@ -55,9 +56,17 @@ fun FacturaScreen(
 
     var showDialog by remember { mutableStateOf(false) }
 
+    var showFilters by remember { mutableStateOf(false) }
+
     val context = LocalContext.current
 
-    BackHandler { onBack() }
+    BackHandler {
+        if (showFilters) {
+            showFilters = false
+        } else {
+            onBack()
+        }
+    }
 
     // Toast para errores
     LaunchedEffect(mensajes) {
@@ -93,8 +102,10 @@ fun FacturaScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onOpenFilters) {
-                        Icon(Icons.Default.FilterList, "Filtros")
+                    FilterButton(
+                        onClick = { showFilters = true }
+                    ) {
+                        Icon(painter = painterResource(id = R.drawable.filtericon_3x), "Filtros")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -150,4 +161,10 @@ fun FacturaScreen(
         )
     }
     Log.d("showDialog", "showDialog: $showDialog")
+    if (showFilters) {
+        FilterScreenFull(
+            viewModel = viewModel,
+            onBack = { showFilters = false }
+        )
+    }
 }
